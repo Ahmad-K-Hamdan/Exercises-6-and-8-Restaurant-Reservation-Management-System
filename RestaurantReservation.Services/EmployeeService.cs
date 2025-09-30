@@ -22,6 +22,11 @@ namespace RestaurantReservation.Services
             return await _employeeRepo.GetAllAsync();
         }
 
+        public async Task<Employee?> GetEmployeeByIdAsync(int tableId)
+        {
+            return await _employeeRepo.GetByIdAsync(tableId);
+        }
+
         public async Task<Employee> AddAsync(int restaurantId, string firstName, string lastName, string position)
         {
             var restaurant = await GetRestaurantByIdAsync(restaurantId);
@@ -56,13 +61,13 @@ namespace RestaurantReservation.Services
 
         public async Task DeleteAsync(int employeeId)
         {
-            var employee = await GetEmployeeByIdAsync(employeeId);
+            var employee = await FindEmployeeByIdAsync(employeeId);
             await _employeeRepo.DeleteAsync(employee);
         }
 
         public async Task<Employee> UpdateAsync(int employeeId, string firstName, string lastName, string position)
         {
-            var employee = await GetEmployeeByIdAsync(employeeId);
+            var employee = await FindEmployeeByIdAsync(employeeId);
 
             var empFirstName = EmployeeValidator.ValidateFirstName(firstName);
             if (empFirstName != null)
@@ -97,7 +102,7 @@ namespace RestaurantReservation.Services
             return await _employeeRepo.GetEmployeeDetailsAsync();
         }
 
-        private async Task<Employee> GetEmployeeByIdAsync(int employeeId)
+        private async Task<Employee> FindEmployeeByIdAsync(int employeeId)
         {
             var employee = await _employeeRepo.GetByIdAsync(employeeId);
             if (employee == null)

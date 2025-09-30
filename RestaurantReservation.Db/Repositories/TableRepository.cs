@@ -27,7 +27,7 @@ namespace RestaurantReservation.Db.Repositories
 
         public async Task<Table?> GetByIdAsync(int TableId)
         {
-            return await _context.Tables.FirstOrDefaultAsync(t => t.TableId == TableId);
+            return await _context.Tables.Include(t => t.Restaurant).FirstOrDefaultAsync(t => t.TableId == TableId);
         }
 
         public async Task<Table> UpdateAsync(Table table)
