@@ -1,11 +1,10 @@
-﻿using Microsoft.Extensions.DependencyInjection;
 using RestaurantReservation.Db;
 using RestaurantReservation.Db.Repositories;
 using RestaurantReservation.Db.Repositories.Interfaces;
 using RestaurantReservation.Services;
 using RestaurantReservation.Services.Interfaces;
 
-namespace RestaurantReservation.ConsoleApp
+namespace RestaurantReservation.API
 {
     public class Program
     {
@@ -23,6 +22,31 @@ namespace RestaurantReservation.ConsoleApp
             {
                 return;
             }
+
+            // Create a web application builder
+            var builder = WebApplication.CreateBuilder(args);
+            
+            // Add API Explorer services required for Swagger to discover endpoints
+            builder.Services.AddEndpointsApiExplorer();
+            
+            // Add Swagger generator to create OpenAPI documentation
+            builder.Services.AddSwaggerGen();
+
+            // Build the web application
+            var app = builder.Build();
+
+            // Configure the HTTP request pipeline and enable swagger in development
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+
+            // Redirect HTTP requests to HTTPS for security
+            app.UseHttpsRedirection();
+
+            // Start the web app
+            app.Run();
         }
 
         private static void ConfigureServices(IServiceCollection services)
