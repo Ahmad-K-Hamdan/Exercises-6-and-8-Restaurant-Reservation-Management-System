@@ -1,7 +1,6 @@
-﻿namespace RestaurantReservation.API.DTOs
+﻿namespace RestaurantReservation.API.DTOs.Employee
 {
-    public record UpdateEmployeeDTO(
-        int EmployeeId,
+    public record CreateEmployeeDTO(
         string FirstName,
         string LastName,
         string Position,

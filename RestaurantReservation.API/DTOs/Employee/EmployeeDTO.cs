@@ -1,4 +1,4 @@
-﻿namespace RestaurantReservation.API.DTOs
+﻿namespace RestaurantReservation.API.DTOs.Employee
 {
     public record EmployeeDTO(
         int EmployeeId,

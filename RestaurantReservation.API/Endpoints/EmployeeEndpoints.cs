@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using RestaurantReservation.API.DTOs;
+using RestaurantReservation.API.DTOs.Employee;
 using RestaurantReservation.Db.Models;
 using RestaurantReservation.Services.Interfaces;
 
