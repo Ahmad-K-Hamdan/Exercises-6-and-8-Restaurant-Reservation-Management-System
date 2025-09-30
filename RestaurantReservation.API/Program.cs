@@ -1,3 +1,4 @@
+using RestaurantReservation.API.Endpoints;
 using RestaurantReservation.Db;
 using RestaurantReservation.Db.Repositories;
 using RestaurantReservation.Db.Repositories.Interfaces;
@@ -10,30 +11,26 @@ namespace RestaurantReservation.API
     {
         public static void Main(string[] args)
         {
-            // Create service collection and configure services
-            var serviceCollection = new ServiceCollection();
-            ConfigureServices(serviceCollection);
-
-            // Build service provider
-            var serviceProvider = serviceCollection.BuildServiceProvider();
-
-            // Ensure database is created and connection is established
-            if (!InitializeDatabase(serviceProvider))
-            {
-                return;
-            }
-
             // Create a web application builder
             var builder = WebApplication.CreateBuilder(args);
-            
+
+            // Register all services with the builder
+            ConfigureServices(builder.Services);
+
             // Add API Explorer services required for Swagger to discover endpoints
             builder.Services.AddEndpointsApiExplorer();
-            
+
             // Add Swagger generator to create OpenAPI documentation
             builder.Services.AddSwaggerGen();
 
             // Build the web application
             var app = builder.Build();
+
+            // Ensure database is created and connection is established
+            if (!InitializeDatabase(app.Services))
+            {
+                return;
+            }
 
             // Configure the HTTP request pipeline and enable swagger in development
             if (app.Environment.IsDevelopment())
@@ -44,6 +41,9 @@ namespace RestaurantReservation.API
 
             // Redirect HTTP requests to HTTPS for security
             app.UseHttpsRedirection();
+
+            // Map endpoints
+            app.MapTableEndpoints();
 
             // Start the web app
             app.Run();

@@ -1,6 +1,5 @@
 ﻿using RestaurantReservation.Db.Models;
 using RestaurantReservation.Core.Validation;
-using RestaurantReservation.Db.Repositories;
 using RestaurantReservation.Core.DTOs;
 using RestaurantReservation.Db.Repositories.Interfaces;
 using RestaurantReservation.Services.Interfaces;
@@ -12,7 +11,7 @@ namespace RestaurantReservation.Services
         private readonly IEmployeeRepository _employeeRepo;
         private readonly IRestaurantRepository _restaurantRepo;
 
-        public EmployeeService(EmployeeRepository employeeRepo, RestaurantRepository restaurantRepo)
+        public EmployeeService(IEmployeeRepository employeeRepo, IRestaurantRepository restaurantRepo)
         {
             _employeeRepo = employeeRepo;
             _restaurantRepo = restaurantRepo;

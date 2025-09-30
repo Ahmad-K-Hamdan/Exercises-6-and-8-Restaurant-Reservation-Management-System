@@ -15,7 +15,7 @@ namespace RestaurantReservation.Db.Repositories
 
         public async Task<List<Table>> GetAllAsync()
         {
-            return await _context.Tables.ToListAsync();
+            return await _context.Tables.Include(t => t.Restaurant).ToListAsync();
         }
 
         public async Task<Table> AddAsync(Table table)

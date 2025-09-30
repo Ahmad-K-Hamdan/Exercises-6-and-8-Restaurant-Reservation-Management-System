@@ -1,6 +1,5 @@
 ﻿using RestaurantReservation.Db.Models;
 using RestaurantReservation.Core.Validation;
-using RestaurantReservation.Db.Repositories;
 using RestaurantReservation.Services.Interfaces;
 using RestaurantReservation.Db.Repositories.Interfaces;
 
@@ -11,7 +10,7 @@ namespace RestaurantReservation.Services
         private readonly ITableRepository _tableRepo;
         private readonly IRestaurantRepository _restaurantRepo;
 
-        public TableService(TableRepository tableRepo, RestaurantRepository restaurantRepo)
+        public TableService(ITableRepository tableRepo, IRestaurantRepository restaurantRepo)
         {
             _tableRepo = tableRepo;
             _restaurantRepo = restaurantRepo;
@@ -20,6 +19,11 @@ namespace RestaurantReservation.Services
         public async Task<List<Table>> ViewAllAsync()
         {
             return await _tableRepo.GetAllAsync();
+        }
+
+        public async Task<Table?> GetTableByIdAsync(int tableId)
+        {
+            return await _tableRepo.GetByIdAsync(tableId);
         }
 
         public async Task<Table> AddAsync(int restaurantId, int capacity)
@@ -44,13 +48,13 @@ namespace RestaurantReservation.Services
 
         public async Task DeleteAsync(int tableId)
         {
-            var table = await GetTableByIdAsync(tableId);
+            var table = await FindTableByIdAsync(tableId);
             await _tableRepo.DeleteAsync(table);
         }
 
         public async Task<Table> UpdateAsync(int tableId, int restaurantId, int capacity)
         {
-            var table = await GetTableByIdAsync(tableId);
+            var table = await FindTableByIdAsync(tableId);
 
             var tableCapacity = TableValidator.ValidateCapacity(capacity.ToString());
             if (tableCapacity != null)
@@ -64,7 +68,7 @@ namespace RestaurantReservation.Services
             return await _tableRepo.UpdateAsync(table);
         }
 
-        private async Task<Table> GetTableByIdAsync(int tableId)
+        private async Task<Table> FindTableByIdAsync(int tableId)
         {
             var table = await _tableRepo.GetByIdAsync(tableId);
             if (table == null)

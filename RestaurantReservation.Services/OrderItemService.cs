@@ -1,6 +1,5 @@
 ﻿using RestaurantReservation.Db.Models;
 using RestaurantReservation.Core.Validation;
-using RestaurantReservation.Db.Repositories;
 using RestaurantReservation.Db.Repositories.Interfaces;
 using RestaurantReservation.Services.Interfaces;
 
@@ -12,7 +11,7 @@ namespace RestaurantReservation.Services
         private readonly IOrderRepository _orderRepo;
         private readonly IMenuItemRepository _menuItemRepo;
 
-        public OrderItemService(OrderItemRepository orderItemRepo, OrderRepository orderRepo, MenuItemRepository menuItemRepo)
+        public OrderItemService(IOrderItemRepository orderItemRepo, IOrderRepository orderRepo, IMenuItemRepository menuItemRepo)
         {
             _orderItemRepo = orderItemRepo;
             _orderRepo = orderRepo;
