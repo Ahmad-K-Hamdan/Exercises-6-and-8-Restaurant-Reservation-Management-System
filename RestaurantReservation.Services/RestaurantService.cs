@@ -19,6 +19,11 @@ namespace RestaurantReservation.Services
             return await _restaurantRepo.GetAllAsync();
         }
 
+        public async Task<Restaurant?> GetRestaurantByIdAsync(int restaurantId)
+        {
+            return await _restaurantRepo.GetByIdAsync(restaurantId);
+        }
+
         public async Task<Restaurant> AddAsync(string name, string address, string phoneNumber, string openingHours)
         {
             var restName = RestaurantValidator.ValidateRestaurantName(name);
@@ -55,13 +60,13 @@ namespace RestaurantReservation.Services
 
         public async Task DeleteAsync(int restaurantId)
         {
-            var restaurant = await GetRestaurantByIdAsync(restaurantId);
+            var restaurant = await FindRestaurantByIdAsync(restaurantId);
             await _restaurantRepo.DeleteAsync(restaurant);
         }
 
         public async Task<Restaurant> UpdateAsync(int restaurantId, string name, string address, string phoneNumber, string openingHours)
         {
-            var restaurant = await GetRestaurantByIdAsync(restaurantId);
+            var restaurant = await FindRestaurantByIdAsync(restaurantId);
 
             var restName = RestaurantValidator.ValidateRestaurantName(name);
             if (restName != null)
@@ -94,11 +99,11 @@ namespace RestaurantReservation.Services
 
         public async Task<decimal> CalculateRestaurantRevenueAsync(int restaurantId)
         {
-            var restaurant = await GetRestaurantByIdAsync(restaurantId);
+            var restaurant = await FindRestaurantByIdAsync(restaurantId);
             return await _restaurantRepo.GetRestaurantRevenueAsync(restaurantId);
         }
 
-        private async Task<Restaurant> GetRestaurantByIdAsync(int restaurantId)
+        private async Task<Restaurant> FindRestaurantByIdAsync(int restaurantId)
         {
             var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId);
             if (restaurant == null)
