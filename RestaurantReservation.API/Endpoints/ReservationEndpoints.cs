@@ -1,0 +1,97 @@
+using Microsoft.AspNetCore.Mvc;
+using RestaurantReservation.API.DTOs.Reservation;
+using RestaurantReservation.Db.Models;
+using RestaurantReservation.Services.Interfaces;
+
+namespace RestaurantReservation.API.Endpoints
+{
+    public static class ReservationEndpoints
+    {
+        public static void MapReservationEndpoints(this WebApplication app)
+        {
+            app.MapGet("/api/reservations", async ([FromServices] IReservationService reservationService) =>
+            {
+                var reservations = await reservationService.ViewAllAsync();
+                var reservationDTOs = reservations.Select(ToDTO).ToList();
+                return Results.Ok(reservationDTOs);
+            })
+            .WithName("GetAllReservations")
+            .WithSummary("Retrieves all reservations")
+            .WithTags("Reservation")
+            .Produces<IEnumerable<ReservationDTO>>(200);
+
+            app.MapGet("/api/reservations/{id:int}", async (int id, [FromServices] IReservationService reservationService) =>
+            {
+                var reservation = await reservationService.GetReservationByIdAsync(id);
+                if (reservation == null)
+                    return Results.NotFound();
+
+                return Results.Ok(ToDTO(reservation));
+            })
+            .WithName("GetReservationById")
+            .WithSummary("Retrieves a reservation by its ID")
+            .WithTags("Reservation")
+            .Produces<ReservationDTO>(200)
+            .Produces(404);
+
+            app.MapPost("/api/reservations", async ([FromBody] CreateReservationDTO dto, [FromServices] IReservationService reservationService) =>
+            {
+                var reservation = await reservationService.AddAsync(dto.CustomerId, dto.RestaurantId, dto.TableId, dto.ReservationDate, dto.PartySize);
+                return Results.Created($"/api/reservations/{reservation.ReservationId}", ToDTO(reservation));
+            })
+            .WithName("AddReservation")
+            .WithSummary("Creates a new reservation")
+            .WithTags("Reservation")
+            .Produces<ReservationDTO>(201)
+            .Produces(400);
+
+            app.MapPut("/api/reservations/{id:int}", async (int id, [FromBody] UpdateReservationDTO dto, [FromServices] IReservationService reservationService) =>
+            {
+                if (id != dto.ReservationId)
+                    return Results.BadRequest("IDs do not match");
+
+                var existing = await reservationService.GetReservationByIdAsync(id);
+                if (existing == null)
+                    return Results.NotFound();
+
+                var reservation = await reservationService.UpdateAsync(dto.ReservationId, dto.CustomerId, dto.RestaurantId, dto.TableId, dto.ReservationDate, dto.PartySize);
+                return Results.Ok(ToDTO(reservation));
+            })
+            .WithName("UpdateReservation")
+            .WithSummary("Updates an existing reservation")
+            .WithTags("Reservation")
+            .Produces<ReservationDTO>(200)
+            .Produces(400)
+            .Produces(404);
+
+            app.MapDelete("/api/reservations/{id:int}", async (int id, [FromServices] IReservationService reservationService) =>
+            {
+                var existing = await reservationService.GetReservationByIdAsync(id);
+                if (existing == null)
+                    return Results.NotFound();
+
+                await reservationService.DeleteAsync(id);
+                return Results.NoContent();
+            })
+            .WithName("DeleteReservation")
+            .WithSummary("Deletes a reservation by its ID")
+            .WithTags("Reservation")
+            .Produces(204)
+            .Produces(404);
+        }
+
+        private static ReservationDTO ToDTO(Reservation reservation)
+        {
+            return new ReservationDTO(
+                reservation.ReservationId,
+                reservation.ReservationDate,
+                reservation.PartySize,
+                reservation.CustomerId,
+                reservation.Customer != null ? $"{reservation.Customer.FirstName} {reservation.Customer.LastName}" : "",
+                reservation.RestaurantId,
+                reservation.Restaurant?.Name ?? "",
+                reservation.TableId
+            );
+        }
+    }
+}

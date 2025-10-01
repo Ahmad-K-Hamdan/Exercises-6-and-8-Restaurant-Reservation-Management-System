@@ -15,7 +15,7 @@ namespace RestaurantReservation.Db.Repositories
 
         public async Task<List<OrderItem>> GetAllAsync()
         {
-            return await _context.OrderItems.ToListAsync();
+            return await _context.OrderItems.Include(oi => oi.MenuItem).ToListAsync();
         }
 
         public async Task<OrderItem> AddAsync(OrderItem orderItem)
@@ -27,7 +27,7 @@ namespace RestaurantReservation.Db.Repositories
 
         public async Task<OrderItem?> GetByIdAsync(int orderItemId)
         {
-            return await _context.OrderItems.FirstOrDefaultAsync(oi => oi.OrderItemId == orderItemId);
+            return await _context.OrderItems.Include(oi => oi.MenuItem).FirstOrDefaultAsync(oi => oi.OrderItemId == orderItemId);
         }
 
         public async Task<OrderItem> UpdateAsync(OrderItem orderItem)
