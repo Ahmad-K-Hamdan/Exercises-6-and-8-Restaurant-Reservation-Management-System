@@ -18,7 +18,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithName("GetAllOrders")
             .WithSummary("Retrieves all orders")
             .WithTags("Order")
-            .Produces<IEnumerable<OrderDTO>>(200);
+            .Produces<IEnumerable<OrderDTO>>(200)
+            .RequireAuthorization();
 
             app.MapGet("/api/orders/{id:int}", async (int id, [FromServices] IOrderService orderService) =>
             {
@@ -33,7 +34,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Retrieves an order by its ID")
             .WithTags("Order")
             .Produces<OrderDTO>(200)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapPost("/api/orders", async ([FromBody] CreateOrderDTO dto, [FromServices] IOrderService orderService) =>
             {
@@ -44,7 +46,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Creates a new order")
             .WithTags("Order")
             .Produces<OrderDTO>(201)
-            .Produces(400);
+            .Produces(400)
+            .RequireAuthorization();
 
             app.MapPut("/api/orders/{id:int}", async (int id, [FromBody] UpdateOrderDTO dto, [FromServices] IOrderService orderService) =>
             {
@@ -61,7 +64,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithTags("Order")
             .Produces<OrderDTO>(200)
             .Produces(400)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapDelete("/api/orders/{id:int}", async (int id, [FromServices] IOrderService orderService) =>
             {
@@ -77,7 +81,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Deletes an order by its ID")
             .WithTags("Order")
             .Produces(204)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
         }
 
         private static OrderDTO ToDTO(Order order)

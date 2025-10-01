@@ -18,7 +18,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithName("GetAllRestaurants")
             .WithSummary("Retrieves all restaurants")
             .WithTags("Restaurant")
-            .Produces<IEnumerable<RestaurantDTO>>(200);
+            .Produces<IEnumerable<RestaurantDTO>>(200)
+            .RequireAuthorization();
 
             app.MapGet("/api/restaurants/{id:int}", async (int id, [FromServices] IRestaurantService restaurantService) =>
             {
@@ -33,7 +34,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Retrieves a restaurant by its ID")
             .WithTags("Restaurant")
             .Produces<RestaurantDTO>(200)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapPost("/api/restaurants", async ([FromBody] CreateRestaurantDTO dto, [FromServices] IRestaurantService restaurantService) =>
             {
@@ -44,7 +46,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Creates a new restaurant")
             .WithTags("Restaurant")
             .Produces<RestaurantDTO>(201)
-            .Produces(400);
+            .Produces(400)
+            .RequireAuthorization();
 
             app.MapPut("/api/restaurants/{id:int}", async (int id, [FromBody] UpdateRestaurantDTO dto, [FromServices] IRestaurantService restaurantService) =>
             {
@@ -61,7 +64,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithTags("Restaurant")
             .Produces<RestaurantDTO>(200)
             .Produces(400)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapDelete("/api/restaurants/{id:int}", async (int id, [FromServices] IRestaurantService restaurantService) =>
             {
@@ -77,7 +81,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Deletes a restaurant by its ID")
             .WithTags("Restaurant")
             .Produces(204)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
         }
 
         private static RestaurantDTO ToDTO(Restaurant restaurant)

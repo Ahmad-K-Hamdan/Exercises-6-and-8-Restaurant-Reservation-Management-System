@@ -19,7 +19,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithName("GetAllReservations")
             .WithSummary("Retrieves all reservations")
             .WithTags("Reservation")
-            .Produces<IEnumerable<ReservationDTO>>(200);
+            .Produces<IEnumerable<ReservationDTO>>(200)
+            .RequireAuthorization();
 
             app.MapGet("/api/reservations/{id:int}", async (int id, [FromServices] IReservationService reservationService) =>
             {
@@ -34,7 +35,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Retrieves a reservation by its ID")
             .WithTags("Reservation")
             .Produces<ReservationDTO>(200)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapPost("/api/reservations", async ([FromBody] CreateReservationDTO dto, [FromServices] IReservationService reservationService) =>
             {
@@ -45,7 +47,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Creates a new reservation")
             .WithTags("Reservation")
             .Produces<ReservationDTO>(201)
-            .Produces(400);
+            .Produces(400)
+            .RequireAuthorization();
 
             app.MapPut("/api/reservations/{id:int}", async (int id, [FromBody] UpdateReservationDTO dto, [FromServices] IReservationService reservationService) =>
             {
@@ -62,7 +65,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithTags("Reservation")
             .Produces<ReservationDTO>(200)
             .Produces(400)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapDelete("/api/reservations/{id:int}", async (int id, [FromServices] IReservationService reservationService) =>
             {
@@ -78,7 +82,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Deletes a reservation by its ID")
             .WithTags("Reservation")
             .Produces(204)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapGet("/api/reservations/customer/{customerId}", async (int customerId, [FromServices] IReservationService reservationService, ICustomerService customerService) =>
             {
@@ -95,7 +100,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Retrieves all reservations for a specific customer by customer ID")
             .WithTags("Reservation")
             .Produces<IEnumerable<ReservationDTO>>(200)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapGet("/api/reservations/{reservationId}/orders", async (int reservationId, [FromServices] IReservationService reservationService) =>
             {
@@ -111,7 +117,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Retrieves all orders and their menu items for a specific reservation by reservation ID")
             .WithTags("Reservation")
             .Produces<IEnumerable<OrderWithItemsDTO>>(200)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapGet("/api/reservations/{reservationId}/menu-items", async (int reservationId, [FromServices] IReservationService reservationService) =>
             {
@@ -127,7 +134,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Retrieves all ordered menu items for a specific reservation by reservation ID")
             .WithTags("Reservation")
             .Produces<IEnumerable<OrderedMenuItemDTO>>(200)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
         }
 
         private static ReservationDTO ToDTO(Reservation reservation)

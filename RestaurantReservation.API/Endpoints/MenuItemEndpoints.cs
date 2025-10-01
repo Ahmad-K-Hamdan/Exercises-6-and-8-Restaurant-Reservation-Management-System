@@ -18,7 +18,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithName("GetAllMenuItems")
             .WithSummary("Retrieves all menu items")
             .WithTags("MenuItem")
-            .Produces<IEnumerable<MenuItemDTO>>(200);
+            .Produces<IEnumerable<MenuItemDTO>>(200)
+            .RequireAuthorization();
 
             app.MapGet("/api/menuitems/{id:int}", async (int id, [FromServices] IMenuItemService menuItemService) =>
             {
@@ -33,7 +34,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Retrieves a menu item by its ID")
             .WithTags("MenuItem")
             .Produces<MenuItemDTO>(200)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapPost("/api/menuitems", async ([FromBody] CreateMenuItemDTO dto, [FromServices] IMenuItemService menuItemService) =>
             {
@@ -44,7 +46,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Creates a new menu item")
             .WithTags("MenuItem")
             .Produces<MenuItemDTO>(201)
-            .Produces(400);
+            .Produces(400)
+            .RequireAuthorization();
 
             app.MapPut("/api/menuitems/{id:int}", async (int id, [FromBody] UpdateMenuItemDTO dto, [FromServices] IMenuItemService menuItemService) =>
             {
@@ -61,7 +64,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithTags("MenuItem")
             .Produces<MenuItemDTO>(200)
             .Produces(400)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapDelete("/api/menuitems/{id:int}", async (int id, [FromServices] IMenuItemService menuItemService) =>
             {
@@ -77,7 +81,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Deletes a menu item by its ID")
             .WithTags("MenuItem")
             .Produces(204)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
         }
 
         private static MenuItemDTO ToDTO(MenuItem menuItem)

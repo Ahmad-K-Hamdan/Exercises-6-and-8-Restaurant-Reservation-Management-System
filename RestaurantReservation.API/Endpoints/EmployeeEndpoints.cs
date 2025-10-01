@@ -18,7 +18,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithName("GetAllEmployees")
             .WithSummary("Retrieves all employees")
             .WithTags("Employee")
-            .Produces<IEnumerable<EmployeeDTO>>(200);
+            .Produces<IEnumerable<EmployeeDTO>>(200)
+            .RequireAuthorization();
 
             app.MapGet("/api/employees/{id:int}", async (int id, [FromServices] IEmployeeService employeeService) =>
             {
@@ -33,7 +34,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Retrieves a employee by its ID")
             .WithTags("Employee")
             .Produces<EmployeeDTO>(200)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapPost("/api/employees", async ([FromBody] CreateEmployeeDTO dto, [FromServices] IEmployeeService employeeService) =>
             {
@@ -44,7 +46,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Creates a new employee")
             .WithTags("Employee")
             .Produces<EmployeeDTO>(201)
-            .Produces(400);
+            .Produces(400)
+            .RequireAuthorization();
 
             app.MapPut("/api/employees/{id:int}", async (int id, [FromBody] UpdateEmployeeDTO dto, [FromServices] IEmployeeService employeeService) =>
             {
@@ -61,7 +64,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithTags("Employee")
             .Produces<EmployeeDTO>(200)
             .Produces(400)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapDelete("/api/employees/{id:int}", async (int id, [FromServices] IEmployeeService employeeService) =>
             {
@@ -77,7 +81,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Deletes a employee by its ID")
             .WithTags("Employee")
             .Produces(204)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapGet("/api/employees/managers", async ([FromServices] IEmployeeService employeeService) =>
             {
@@ -89,7 +94,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Retrieves all employees with the position of 'Manager'")
             .WithTags("Employee")
             .Produces<IEnumerable<EmployeeDTO>>(200)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapGet("/api/employees/{employeeId}/average-order-amount", async (int employeeId, [FromServices] IEmployeeService employeeService, [FromServices] IOrderService orderService) =>
             {
@@ -105,7 +111,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Calculate average order amount for a specific employee")
             .WithTags("Employee")
             .Produces<object>(200)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
         }
 
         private static EmployeeDTO ToDTO(Employee employee)

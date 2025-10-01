@@ -18,7 +18,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithName("GetAllTables")
             .WithSummary("Retrieves all tables")
             .WithTags("Table")
-            .Produces<IEnumerable<TableDTO>>(200);
+            .Produces<IEnumerable<TableDTO>>(200)
+            .RequireAuthorization();
 
             app.MapGet("/api/tables/{id:int}", async (int id, [FromServices] ITableService tableService) =>
             {
@@ -33,7 +34,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Retrieves a table by its ID")
             .WithTags("Table")
             .Produces<TableDTO>(200)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapPost("/api/tables", async ([FromBody] CreateTableDTO dto, [FromServices] ITableService tableService) =>
             {
@@ -44,7 +46,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Creates a new table")
             .WithTags("Table")
             .Produces<TableDTO>(201)
-            .Produces(400);
+            .Produces(400)
+            .RequireAuthorization();
 
             app.MapPut("/api/tables/{id:int}", async (int id, [FromBody] UpdateTableDTO dto, [FromServices] ITableService tableService) =>
             {
@@ -77,7 +80,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Deletes a table by its ID")
             .WithTags("Table")
             .Produces(204)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
         }
 
         private static TableDTO ToDTO(Table table)

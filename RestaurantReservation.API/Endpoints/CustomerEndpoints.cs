@@ -18,7 +18,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithName("GetAllCustomers")
             .WithSummary("Retrieves all customers")
             .WithTags("Customer")
-            .Produces<IEnumerable<CustomerDTO>>(200);
+            .Produces<IEnumerable<CustomerDTO>>(200)
+            .RequireAuthorization();
 
             app.MapGet("/api/customers/{id:int}", async (int id, [FromServices] ICustomerService customerService) =>
             {
@@ -33,7 +34,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Retrieves a customer by its ID")
             .WithTags("Customer")
             .Produces<CustomerDTO>(200)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapPost("/api/customers", async ([FromBody] CreateCustomerDTO dto, [FromServices] ICustomerService customerService) =>
             {
@@ -44,7 +46,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Creates a new customer")
             .WithTags("Customer")
             .Produces<CustomerDTO>(201)
-            .Produces(400);
+            .Produces(400)
+            .RequireAuthorization();
 
             app.MapPut("/api/customers/{id:int}", async (int id, [FromBody] UpdateCustomerDTO dto, [FromServices] ICustomerService customerService) =>
             {
@@ -61,7 +64,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithTags("Customer")
             .Produces<CustomerDTO>(200)
             .Produces(400)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapDelete("/api/customers/{id:int}", async (int id, [FromServices] ICustomerService customerService) =>
             {
@@ -77,7 +81,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Deletes a customer by its ID")
             .WithTags("Customer")
             .Produces(204)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
         }
 
         private static CustomerDTO ToDTO(Customer customer)

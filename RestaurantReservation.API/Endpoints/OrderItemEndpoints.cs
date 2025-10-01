@@ -18,7 +18,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithName("GetAllOrderItems")
             .WithSummary("Retrieves all order items")
             .WithTags("OrderItem")
-            .Produces<IEnumerable<OrderItemDTO>>(200);
+            .Produces<IEnumerable<OrderItemDTO>>(200)
+            .RequireAuthorization();
 
             app.MapGet("/api/orderitems/{id:int}", async (int id, [FromServices] IOrderItemService orderItemService) =>
             {
@@ -33,7 +34,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Retrieves an order item by its ID")
             .WithTags("OrderItem")
             .Produces<OrderItemDTO>(200)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapPost("/api/orderitems", async ([FromBody] CreateOrderItemDTO dto, [FromServices] IOrderItemService orderItemService) =>
             {
@@ -44,7 +46,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Creates a new order item")
             .WithTags("OrderItem")
             .Produces<OrderItemDTO>(201)
-            .Produces(400);
+            .Produces(400)
+            .RequireAuthorization();
 
             app.MapPut("/api/orderitems/{id:int}", async (int id, [FromBody] UpdateOrderItemDTO dto, [FromServices] IOrderItemService orderItemService) =>
             {
@@ -61,7 +64,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithTags("OrderItem")
             .Produces<OrderItemDTO>(200)
             .Produces(400)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapDelete("/api/orderitems/{id:int}", async (int id, [FromServices] IOrderItemService orderItemService) =>
             {
@@ -77,7 +81,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Deletes an order item by its ID")
             .WithTags("OrderItem")
             .Produces(204)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
         }
 
         private static OrderItemDTO ToDTO(OrderItem orderItem)

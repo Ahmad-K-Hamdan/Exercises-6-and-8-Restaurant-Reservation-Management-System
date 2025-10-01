@@ -1,3 +1,8 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using RestaurantReservation.API.Auth;
 using RestaurantReservation.API.Endpoints;
 using RestaurantReservation.Db;
 using RestaurantReservation.Db.Repositories;
@@ -17,11 +22,64 @@ namespace RestaurantReservation.API
             // Register all services with the builder
             ConfigureServices(builder.Services);
 
+            // Register JWT Token Generator
+            builder.Services.AddSingleton<JwtTokenGenerator>();
+
+            // Add Authentication & Authorization
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                        ValidAudience = builder.Configuration["Jwt:Audience"],
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                    };
+                });
+            builder.Services.AddAuthorization();
+
             // Add API Explorer services required for Swagger to discover endpoints
             builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen(swagger =>
+            {
+                swagger.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "Restaurant Reservation API",
+                    Version = "v1",
+                    Description = "API for managing restaurant reservations with JWT authentication"
+                });
 
-            // Add Swagger generator to create OpenAPI documentation
-            builder.Services.AddSwaggerGen();
+                // JWT Authentication in Swagger
+                swagger.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Enter 'Bearer' [space] and then your token"
+                });
+
+                swagger.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] {}
+                    }
+                });
+            });
 
             // Build the web application
             var app = builder.Build();
@@ -41,6 +99,18 @@ namespace RestaurantReservation.API
 
             // Redirect HTTP requests to HTTPS for security
             app.UseHttpsRedirection();
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            app.MapPost("/api/auth/token", (TokenRequest request, JwtTokenGenerator jwtGen) =>
+            {
+                var token = jwtGen.GenerateToken(request.Username, request.Email);
+                return Results.Ok(new TokenResponse(token, DateTime.UtcNow.AddHours(1)));
+            })
+            .WithName("GenerateToken")
+            .WithSummary("Generate JWT token for authentication")
+            .WithTags("Authentication")
+            .AllowAnonymous();
 
             // Map endpoints
             app.MapTableEndpoints();
