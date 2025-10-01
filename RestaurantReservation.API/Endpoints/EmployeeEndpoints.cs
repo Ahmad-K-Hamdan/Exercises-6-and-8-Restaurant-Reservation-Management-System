@@ -78,6 +78,18 @@ namespace RestaurantReservation.API.Endpoints
             .WithTags("Employee")
             .Produces<EmployeeDTO>(204)
             .Produces(404);
+
+            app.MapGet("/api/employees/managers", async ([FromServices] IEmployeeService employeeService) =>
+            {
+                var managers = await employeeService.ListManagersAsync();
+                var managerDTOs = managers.Select(ToDTO).ToList();
+                return Results.Ok(managerDTOs);
+            })
+            .WithName("GetAllManagers")
+            .WithSummary("Retrieves all employees with the position of 'Manager'")
+            .WithTags("Employee")
+            .Produces<IEnumerable<EmployeeDTO>>(200)
+            .Produces(404);
         }
 
         private static EmployeeDTO ToDTO(Employee employee)

@@ -46,7 +46,7 @@ namespace RestaurantReservation.Db.Repositories
 
         public async Task<List<Employee>> GetManagersAsync()
         {
-            return await _context.Employees.Where(emp => emp.Position == "Manager").ToListAsync();
+            return await _context.Employees.Include(e => e.Restaurant).Where(emp => emp.Position == "Manager").ToListAsync();
         }
 
         public async Task<List<EmployeeDetailsDTO>> GetEmployeeDetailsAsync()
