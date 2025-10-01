@@ -21,6 +21,11 @@ namespace RestaurantReservation.Services
             return await _menuItemRepo.GetAllAsync();
         }
 
+        public async Task<MenuItem?> GetMenuItemByIdAsync(int menuItemId)
+        {
+            return await _menuItemRepo.GetByIdAsync(menuItemId);
+        }
+
         public async Task<MenuItem> AddAsync(int restaurantId, string name, string description, decimal price)
         {
             var restaurant = await GetRestaurantByIdAsync(restaurantId);
@@ -55,13 +60,13 @@ namespace RestaurantReservation.Services
 
         public async Task DeleteAsync(int menuItemId)
         {
-            var menuItem = await GetMenuItemByIdAsync(menuItemId);
+            var menuItem = await FindMenuItemByIdAsync(menuItemId);
             await _menuItemRepo.DeleteAsync(menuItem);
         }
 
         public async Task<MenuItem> UpdateAsync(int menuItemId, string name, string description, decimal price)
         {
-            var menuItem = await GetMenuItemByIdAsync(menuItemId);
+            var menuItem = await FindMenuItemByIdAsync(menuItemId);
 
             var menuItemName = MenuItemValidator.ValidateMenuItemName(name);
             if (menuItemName != null)
@@ -86,7 +91,7 @@ namespace RestaurantReservation.Services
             return await _menuItemRepo.UpdateAsync(menuItem);
         }
 
-        private async Task<MenuItem> GetMenuItemByIdAsync(int menuItemId)
+        private async Task<MenuItem> FindMenuItemByIdAsync(int menuItemId)
         {
             var menuItem = await _menuItemRepo.GetByIdAsync(menuItemId);
             if (menuItem == null)

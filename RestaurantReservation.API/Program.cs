@@ -47,6 +47,7 @@ namespace RestaurantReservation.API
             app.MapEmployeeEndpoints();
             app.MapRestaurantEndpoints();
             app.MapCustomerEndpoints();
+            app.MapMenuItemEndpoints();
 
             // Start the web app
             app.Run();

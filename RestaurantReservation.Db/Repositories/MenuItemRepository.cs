@@ -15,7 +15,7 @@ namespace RestaurantReservation.Db.Repositories
 
         public async Task<List<MenuItem>> GetAllAsync()
         {
-            return await _context.MenuItems.ToListAsync();
+            return await _context.MenuItems.Include(mi => mi.Restaurant).ToListAsync();
         }
 
         public async Task<MenuItem> AddAsync(MenuItem menuItem)
@@ -27,7 +27,7 @@ namespace RestaurantReservation.Db.Repositories
 
         public async Task<MenuItem?> GetByIdAsync(int ItemId)
         {
-            return await _context.MenuItems.FirstOrDefaultAsync(mi => mi.ItemId == ItemId);
+            return await _context.MenuItems.Include(mi => mi.Restaurant).FirstOrDefaultAsync(mi => mi.ItemId == ItemId);
         }
 
         public async Task<MenuItem> UpdateAsync(MenuItem menuItem)
