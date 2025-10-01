@@ -42,9 +42,7 @@ namespace RestaurantReservation.Services
             {
                 OrderId = orderId,
                 ItemId = menuItemId,
-                Quantity = quantity,
-                Order = order,
-                MenuItem = menuItem
+                Quantity = quantity
             };
 
             return await _orderItemRepo.AddAsync(newOrderItem);
@@ -68,7 +66,7 @@ namespace RestaurantReservation.Services
             orderItem.OrderId = orderId;
             orderItem.ItemId = itemId;
             orderItem.Quantity = quantity;
-            
+
             return await _orderItemRepo.UpdateAsync(orderItem);
         }
     }

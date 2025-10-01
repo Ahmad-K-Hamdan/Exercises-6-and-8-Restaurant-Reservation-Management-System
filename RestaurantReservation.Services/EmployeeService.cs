@@ -53,8 +53,7 @@ namespace RestaurantReservation.Services
                 RestaurantId = restaurantId,
                 FirstName = firstName,
                 LastName = lastName,
-                Position = position,
-                Restaurant = restaurant
+                Position = position
             };
 
             return await _employeeRepo.AddAsync(newEmployee);

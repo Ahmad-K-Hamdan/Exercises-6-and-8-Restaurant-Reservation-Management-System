@@ -49,9 +49,7 @@ namespace RestaurantReservation.Services
                 ReservationId = reservationId,
                 EmployeeId = employeeId,
                 OrderDate = orderDate,
-                TotalAmount = totalAmount,
-                Reservation = reservation,
-                Employee = employee
+                TotalAmount = totalAmount
             };
 
             return await _orderRepo.AddAsync(newOrder);

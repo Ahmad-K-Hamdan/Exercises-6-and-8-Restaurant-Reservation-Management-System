@@ -54,10 +54,7 @@ namespace RestaurantReservation.Services
                 RestaurantId = restaurantId,
                 TableId = tableId,
                 ReservationDate = reservationDate,
-                PartySize = partySize,
-                Customer = customer,
-                Restaurant = restaurant,
-                Table = table
+                PartySize = partySize
             };
 
             return await _reservationRepo.AddAsync(newReservation);

@@ -39,7 +39,6 @@ namespace RestaurantReservation.Services
             {
                 RestaurantId = restaurantId,
                 Capacity = capacity,
-                Restaurant = restaurant
             };
 
             return await _tableRepo.AddAsync(newTable);

@@ -64,7 +64,8 @@ namespace RestaurantReservation.API.Endpoints
             .WithTags("Table")
             .Produces<TableDTO>(200)
             .Produces(400)
-            .Produces(404);
+            .Produces(404)
+            .RequireAuthorization();
 
             app.MapDelete("/api/tables/{id:int}", async (int id, [FromServices] ITableService tableService) =>
             {

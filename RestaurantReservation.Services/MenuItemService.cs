@@ -52,8 +52,7 @@ namespace RestaurantReservation.Services
                 RestaurantId = restaurantId,
                 Name = name,
                 Description = description,
-                Price = price,
-                Restaurant = restaurant
+                Price = price
             };
 
             return await _menuItemRepo.AddAsync(newMenuItem);
