@@ -22,25 +22,26 @@ namespace RestaurantReservation.Services
             return await _employeeRepo.GetAllAsync();
         }
 
-        public async Task<Employee?> GetEmployeeByIdAsync(int tableId)
+        public async Task<Employee?> GetEmployeeByIdAsync(int employeeId)
         {
-            return await _employeeRepo.GetByIdAsync(tableId);
+            return await _employeeRepo.GetByIdAsync(employeeId);
         }
 
         public async Task<Employee> AddAsync(int restaurantId, string firstName, string lastName, string position)
         {
-            var restaurant = await GetRestaurantByIdAsync(restaurantId);
-
+            var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId) ?? throw new ArgumentException($"Restaurant with ID {restaurantId} not found.");
             var empFirstName = EmployeeValidator.ValidateFirstName(firstName);
             if (empFirstName != null)
             {
                 throw new ArgumentException(empFirstName);
             }
+            
             var empLastName = EmployeeValidator.ValidateLastName(lastName);
             if (empLastName != null)
             {
                 throw new ArgumentException(empLastName);
             }
+            
             var empPosition = EmployeeValidator.ValidatePosition(position);
             if (empPosition != null)
             {
@@ -61,24 +62,25 @@ namespace RestaurantReservation.Services
 
         public async Task DeleteAsync(int employeeId)
         {
-            var employee = await FindEmployeeByIdAsync(employeeId);
+            var employee = await _employeeRepo.GetByIdAsync(employeeId) ?? throw new ArgumentException($"Employee with ID {employeeId} not found.");
             await _employeeRepo.DeleteAsync(employee);
         }
 
         public async Task<Employee> UpdateAsync(int employeeId, string firstName, string lastName, string position)
         {
-            var employee = await FindEmployeeByIdAsync(employeeId);
-
+            var employee = await _employeeRepo.GetByIdAsync(employeeId) ?? throw new ArgumentException($"Employee with ID {employeeId} not found.");
             var empFirstName = EmployeeValidator.ValidateFirstName(firstName);
             if (empFirstName != null)
             {
                 throw new ArgumentException(empFirstName);
             }
+            
             var empLastName = EmployeeValidator.ValidateLastName(lastName);
             if (empLastName != null)
             {
                 throw new ArgumentException(empLastName);
             }
+            
             var empPosition = EmployeeValidator.ValidatePosition(position);
             if (empPosition != null)
             {
@@ -100,26 +102,6 @@ namespace RestaurantReservation.Services
         public async Task<List<EmployeeDetailsDTO>> GetEmployeeDetailsAsync()
         {
             return await _employeeRepo.GetEmployeeDetailsAsync();
-        }
-
-        private async Task<Employee> FindEmployeeByIdAsync(int employeeId)
-        {
-            var employee = await _employeeRepo.GetByIdAsync(employeeId);
-            if (employee == null)
-            {
-                throw new InvalidOperationException($"Employee with ID {employeeId} not found.");
-            }
-            return employee;
-        }
-
-        private async Task<Restaurant> GetRestaurantByIdAsync(int restaurantId)
-        {
-            var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId);
-            if (restaurant == null)
-            {
-                throw new ArgumentException("Restaurant not found.");
-            }
-            return restaurant;
         }
     }
 }

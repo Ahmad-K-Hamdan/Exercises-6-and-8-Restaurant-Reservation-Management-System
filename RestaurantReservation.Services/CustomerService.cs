@@ -32,16 +32,19 @@ namespace RestaurantReservation.Services
             {
                 throw new ArgumentException(cusFirstName);
             }
+
             var cusLastName = CustomerValidator.ValidateLastName(lastName);
             if (cusLastName != null)
             {
                 throw new ArgumentException(cusLastName);
             }
+
             var cusEmail = CustomerValidator.ValidateEmail(email);
             if (cusEmail != null)
             {
                 throw new ArgumentException(cusEmail);
             }
+
             var cusPhoneNumber = CustomerValidator.ValidatePhoneNumber(phoneNumber);
             if (cusPhoneNumber != null)
             {
@@ -61,39 +64,41 @@ namespace RestaurantReservation.Services
 
         public async Task DeleteAsync(int customerId)
         {
-            var customer = await FindCustomerByIdAsync(customerId);
+            var customer = await _customerRepo.GetByIdAsync(customerId) ?? throw new ArgumentException($"Customer with ID {customerId} not found.");
             await _customerRepo.DeleteAsync(customer);
         }
 
         public async Task<Customer> UpdateAsync(int customerId, string firstName, string lastName, string email, string phoneNumber)
         {
-            var customer = await FindCustomerByIdAsync(customerId);
-
+            var customer = await _customerRepo.GetByIdAsync(customerId) ?? throw new ArgumentException($"Customer with ID {customerId} not found.");
             var cusFirstName = CustomerValidator.ValidateFirstName(firstName);
             if (cusFirstName != null)
             {
                 throw new ArgumentException(cusFirstName);
             }
+
             var cusLastName = CustomerValidator.ValidateLastName(lastName);
             if (cusLastName != null)
             {
                 throw new ArgumentException(cusLastName);
             }
+
             var cusEmail = CustomerValidator.ValidateEmail(email);
             if (cusEmail != null)
             {
                 throw new ArgumentException(cusEmail);
             }
+
             var cusPhoneNumber = CustomerValidator.ValidatePhoneNumber(phoneNumber);
             if (cusPhoneNumber != null)
             {
                 throw new ArgumentException(cusPhoneNumber);
             }
 
-            customer.FirstName = cusFirstName!;
-            customer.LastName = cusLastName!;
-            customer.Email = cusEmail!;
-            customer.PhoneNumber = cusPhoneNumber!;
+            customer.FirstName = firstName;
+            customer.LastName = lastName;
+            customer.Email = email;
+            customer.PhoneNumber = phoneNumber;
 
             return await _customerRepo.UpdateAsync(customer);
         }
@@ -105,17 +110,8 @@ namespace RestaurantReservation.Services
             {
                 throw new ArgumentException(partySizeValidation);
             }
-            return await _customerRepo.FindCustomersByPartySizeAsync(minPartySize);
-        }
 
-        private async Task<Customer> FindCustomerByIdAsync(int customerId)
-        {
-            var customer = await _customerRepo.GetByIdAsync(customerId);
-            if (customer == null)
-            {
-                throw new InvalidOperationException($"Customer with ID {customerId} not found.");
-            }
-            return customer;
+            return await _customerRepo.FindCustomersByPartySizeAsync(minPartySize);
         }
     }
 }

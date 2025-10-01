@@ -23,11 +23,15 @@ namespace RestaurantReservation.Services
             return await _orderItemRepo.GetAllAsync();
         }
 
+        public async Task<OrderItem?> GetOrderItemByIdAsync(int orderItemId)
+        {
+            return await _orderItemRepo.GetByIdAsync(orderItemId);
+        }
+
         public async Task<OrderItem> AddAsync(int orderId, int menuItemId, int quantity)
         {
-            var order = await GetOrderByIdAsync(orderId);
-            var menuItem = await GetMenuItemByIdAsync(menuItemId);
-
+            var order = await _orderRepo.GetByIdAsync(orderId) ?? throw new ArgumentException($"Order with ID {orderId} not found.");
+            var menuItem = await _menuItemRepo.GetByIdAsync(menuItemId) ?? throw new ArgumentException($"Menu item with ID {menuItemId} not found.");
             var quantityValidation = OrderItemValidator.ValidateQuantity(quantity.ToString());
             if (quantityValidation != null)
             {
@@ -48,52 +52,24 @@ namespace RestaurantReservation.Services
 
         public async Task DeleteAsync(int orderItemId)
         {
-            var orderItem = await GetOrderItemByIdAsync(orderItemId);
+            var orderItem = await _orderItemRepo.GetByIdAsync(orderItemId) ?? throw new ArgumentException($"Order item with ID {orderItemId} not found.");
             await _orderItemRepo.DeleteAsync(orderItem);
         }
 
-        public async Task<OrderItem> UpdateAsync(int orderItemId, int quantity)
+        public async Task<OrderItem> UpdateAsync(int orderItemId, int orderId, int itemId, int quantity)
         {
-            var orderItem = await GetOrderItemByIdAsync(orderItemId);
-
+            var orderItem = await _orderItemRepo.GetByIdAsync(orderItemId) ?? throw new ArgumentException($"Order item with ID {orderItemId} not found.");
             var quantityValidation = OrderItemValidator.ValidateQuantity(quantity.ToString());
             if (quantityValidation != null)
             {
                 throw new ArgumentException(quantityValidation);
             }
 
+            orderItem.OrderId = orderId;
+            orderItem.ItemId = itemId;
             orderItem.Quantity = quantity;
+            
             return await _orderItemRepo.UpdateAsync(orderItem);
-        }
-
-        private async Task<OrderItem> GetOrderItemByIdAsync(int orderItemId)
-        {
-            var orderItem = await _orderItemRepo.GetByIdAsync(orderItemId);
-            if (orderItem == null)
-            {
-                throw new InvalidOperationException($"Order item with ID {orderItemId} not found.");
-            }
-            return orderItem;
-        }
-
-        private async Task<Order> GetOrderByIdAsync(int orderId)
-        {
-            var order = await _orderRepo.GetByIdAsync(orderId);
-            if (order == null)
-            {
-                throw new InvalidOperationException($"Order with ID {orderId} not found.");
-            }
-            return order;
-        }
-
-        private async Task<MenuItem> GetMenuItemByIdAsync(int menuItemId)
-        {
-            var menuItem = await _menuItemRepo.GetByIdAsync(menuItemId);
-            if (menuItem == null)
-            {
-                throw new InvalidOperationException($"Menu item with ID {menuItemId} not found.");
-            }
-            return menuItem;
         }
     }
 }

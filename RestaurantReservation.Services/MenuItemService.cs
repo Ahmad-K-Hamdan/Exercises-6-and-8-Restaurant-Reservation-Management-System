@@ -28,18 +28,19 @@ namespace RestaurantReservation.Services
 
         public async Task<MenuItem> AddAsync(int restaurantId, string name, string description, decimal price)
         {
-            var restaurant = await GetRestaurantByIdAsync(restaurantId);
-
+            var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId) ?? throw new ArgumentException($"Restaurant with ID {restaurantId} not found.");
             var menuItemName = MenuItemValidator.ValidateMenuItemName(name);
             if (menuItemName != null)
             {
                 throw new ArgumentException(menuItemName);
             }
+
             var menuItemDescription = MenuItemValidator.ValidateDescription(description);
             if (menuItemDescription != null)
             {
                 throw new ArgumentException(menuItemDescription);
             }
+
             var menuItemPrice = MenuItemValidator.ValidatePrice(price.ToString());
             if (menuItemPrice != null)
             {
@@ -60,24 +61,25 @@ namespace RestaurantReservation.Services
 
         public async Task DeleteAsync(int menuItemId)
         {
-            var menuItem = await FindMenuItemByIdAsync(menuItemId);
+            var menuItem = await _menuItemRepo.GetByIdAsync(menuItemId) ?? throw new ArgumentException($"Menu item with ID {menuItemId} not found.");
             await _menuItemRepo.DeleteAsync(menuItem);
         }
 
         public async Task<MenuItem> UpdateAsync(int menuItemId, string name, string description, decimal price)
         {
-            var menuItem = await FindMenuItemByIdAsync(menuItemId);
-
+            var menuItem = await _menuItemRepo.GetByIdAsync(menuItemId) ?? throw new ArgumentException($"Menu item with ID {menuItemId} not found.");
             var menuItemName = MenuItemValidator.ValidateMenuItemName(name);
             if (menuItemName != null)
             {
                 throw new ArgumentException(menuItemName);
             }
+
             var menuItemDescription = MenuItemValidator.ValidateDescription(description);
             if (menuItemDescription != null)
             {
                 throw new ArgumentException(menuItemDescription);
             }
+
             var menuItemPrice = MenuItemValidator.ValidatePrice(price.ToString());
             if (menuItemPrice != null)
             {
@@ -89,26 +91,6 @@ namespace RestaurantReservation.Services
             menuItem.Price = price;
 
             return await _menuItemRepo.UpdateAsync(menuItem);
-        }
-
-        private async Task<MenuItem> FindMenuItemByIdAsync(int menuItemId)
-        {
-            var menuItem = await _menuItemRepo.GetByIdAsync(menuItemId);
-            if (menuItem == null)
-            {
-                throw new InvalidOperationException($"Menu item with ID {menuItemId} not found.");
-            }
-            return menuItem;
-        }
-
-        private async Task<Restaurant> GetRestaurantByIdAsync(int restaurantId)
-        {
-            var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId);
-            if (restaurant == null)
-            {
-                throw new InvalidOperationException($"Restaurant with ID {restaurantId} not found.");
-            }
-            return restaurant;
         }
     }
 }

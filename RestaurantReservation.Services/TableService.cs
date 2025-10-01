@@ -28,8 +28,7 @@ namespace RestaurantReservation.Services
 
         public async Task<Table> AddAsync(int restaurantId, int capacity)
         {
-            var restaurant = await GetRestaurantByIdAsync(restaurantId);
-
+            var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId) ?? throw new ArgumentException($"Restaurant with ID {restaurantId} not found.");
             var tableCapacity = TableValidator.ValidateCapacity(capacity.ToString());
             if (tableCapacity != null)
             {
@@ -48,14 +47,13 @@ namespace RestaurantReservation.Services
 
         public async Task DeleteAsync(int tableId)
         {
-            var table = await FindTableByIdAsync(tableId);
+            var table = await _tableRepo.GetByIdAsync(tableId) ?? throw new ArgumentException($"Table with ID {tableId} not found.");
             await _tableRepo.DeleteAsync(table);
         }
 
         public async Task<Table> UpdateAsync(int tableId, int restaurantId, int capacity)
         {
-            var table = await FindTableByIdAsync(tableId);
-
+            var table = await _tableRepo.GetByIdAsync(tableId) ?? throw new ArgumentException($"Table with ID {tableId} not found.");
             var tableCapacity = TableValidator.ValidateCapacity(capacity.ToString());
             if (tableCapacity != null)
             {
@@ -66,26 +64,6 @@ namespace RestaurantReservation.Services
             table.Capacity = capacity;
 
             return await _tableRepo.UpdateAsync(table);
-        }
-
-        private async Task<Table> FindTableByIdAsync(int tableId)
-        {
-            var table = await _tableRepo.GetByIdAsync(tableId);
-            if (table == null)
-            {
-                throw new InvalidOperationException($"Table with ID {tableId} not found.");
-            }
-            return table;
-        }
-
-        private async Task<Restaurant> GetRestaurantByIdAsync(int restaurantId)
-        {
-            var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId);
-            if (restaurant == null)
-            {
-                throw new InvalidOperationException($"Restaurant with ID {restaurantId} not found.");
-            }
-            return restaurant;
         }
     }
 }
