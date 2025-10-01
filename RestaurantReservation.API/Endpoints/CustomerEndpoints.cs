@@ -24,8 +24,9 @@ namespace RestaurantReservation.API.Endpoints
             {
                 var customer = await customerService.GetCustomerByIdAsync(id);
                 if (customer == null)
+                {
                     return Results.NotFound();
-
+                }
                 return Results.Ok(ToDTO(customer));
             })
             .WithName("GetCustomerById")
@@ -47,14 +48,12 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPut("/api/customers/{id:int}", async (int id, [FromBody] UpdateCustomerDTO dto, [FromServices] ICustomerService customerService) =>
             {
-                if (id != dto.CustomerId)
-                    return Results.BadRequest("IDs do not match");
-
                 var existing = await customerService.GetCustomerByIdAsync(id);
                 if (existing == null)
+                {
                     return Results.NotFound();
-
-                var customer = await customerService.UpdateAsync(dto.CustomerId, dto.FirstName, dto.LastName, dto.Email, dto.PhoneNumber);
+                }
+                var customer = await customerService.UpdateAsync(id, dto.FirstName, dto.LastName, dto.Email, dto.PhoneNumber);
                 return Results.Ok(ToDTO(customer));
             })
             .WithName("UpdateCustomer")
@@ -68,8 +67,9 @@ namespace RestaurantReservation.API.Endpoints
             {
                 var existing = await customerService.GetCustomerByIdAsync(id);
                 if (existing == null)
+                {
                     return Results.NotFound();
-
+                }
                 await customerService.DeleteAsync(id);
                 return Results.NoContent();
             })

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using RestaurantReservation.API.DTOs.Reservation;
+using RestaurantReservation.Core.DTOs;
 using RestaurantReservation.Db.Models;
 using RestaurantReservation.Services.Interfaces;
 
@@ -24,8 +25,9 @@ namespace RestaurantReservation.API.Endpoints
             {
                 var reservation = await reservationService.GetReservationByIdAsync(id);
                 if (reservation == null)
+                {
                     return Results.NotFound();
-
+                }
                 return Results.Ok(ToDTO(reservation));
             })
             .WithName("GetReservationById")
@@ -47,14 +49,12 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPut("/api/reservations/{id:int}", async (int id, [FromBody] UpdateReservationDTO dto, [FromServices] IReservationService reservationService) =>
             {
-                if (id != dto.ReservationId)
-                    return Results.BadRequest("IDs do not match");
-
                 var existing = await reservationService.GetReservationByIdAsync(id);
                 if (existing == null)
+                {
                     return Results.NotFound();
-
-                var reservation = await reservationService.UpdateAsync(dto.ReservationId, dto.CustomerId, dto.RestaurantId, dto.TableId, dto.ReservationDate, dto.PartySize);
+                }
+                var reservation = await reservationService.UpdateAsync(id, dto.CustomerId, dto.RestaurantId, dto.TableId, dto.ReservationDate, dto.PartySize);
                 return Results.Ok(ToDTO(reservation));
             })
             .WithName("UpdateReservation")
@@ -68,8 +68,9 @@ namespace RestaurantReservation.API.Endpoints
             {
                 var existing = await reservationService.GetReservationByIdAsync(id);
                 if (existing == null)
+                {
                     return Results.NotFound();
-
+                }
                 await reservationService.DeleteAsync(id);
                 return Results.NoContent();
             })
@@ -77,6 +78,55 @@ namespace RestaurantReservation.API.Endpoints
             .WithSummary("Deletes a reservation by its ID")
             .WithTags("Reservation")
             .Produces(204)
+            .Produces(404);
+
+            app.MapGet("/api/reservations/customer/{customerId}", async (int customerId, [FromServices] IReservationService reservationService, ICustomerService customerService) =>
+            {
+                var customer = await customerService.GetCustomerByIdAsync(customerId);
+                if (customer == null)
+                {
+                    return Results.NotFound();
+                }
+                var reservations = await reservationService.ListReservationsByCustomerAsync(customerId);
+                var reservationDTOs = reservations.Select(ToDTO).ToList();
+                return Results.Ok(reservationDTOs);
+            })
+            .WithName("GetReservationsByCustomerId")
+            .WithSummary("Retrieves all reservations for a specific customer by customer ID")
+            .WithTags("Reservation")
+            .Produces<IEnumerable<ReservationDTO>>(200)
+            .Produces(404);
+
+            app.MapGet("/api/reservations/{reservationId}/orders", async (int reservationId, [FromServices] IReservationService reservationService) =>
+            {
+                var reservation = await reservationService.GetReservationByIdAsync(reservationId);
+                if (reservation == null)
+                {
+                    return Results.NotFound();
+                }
+                var orders = await reservationService.ListOrdersAndMenuItemsAsync(reservationId);
+                return Results.Ok(orders);
+            })
+            .WithName("GetOrdersByReservationId")
+            .WithSummary("Retrieves all orders and their menu items for a specific reservation by reservation ID")
+            .WithTags("Reservation")
+            .Produces<IEnumerable<OrderWithItemsDTO>>(200)
+            .Produces(404);
+
+            app.MapGet("/api/reservations/{reservationId}/menu-items", async (int reservationId, [FromServices] IReservationService reservationService) =>
+            {
+                var reservation = await reservationService.GetReservationByIdAsync(reservationId);
+                if (reservation == null)
+                {
+                    return Results.NotFound();
+                }
+                var menuItems = await reservationService.ListOrderedMenuItemsAsync(reservationId);
+                return Results.Ok(menuItems);
+            })
+            .WithName("GetMenuItemsByReservationId")
+            .WithSummary("Retrieves all ordered menu items for a specific reservation by reservation ID")
+            .WithTags("Reservation")
+            .Produces<IEnumerable<OrderedMenuItemDTO>>(200)
             .Produces(404);
         }
 

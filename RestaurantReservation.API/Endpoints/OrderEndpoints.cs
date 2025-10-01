@@ -24,8 +24,9 @@ namespace RestaurantReservation.API.Endpoints
             {
                 var order = await orderService.GetOrderByIdAsync(id);
                 if (order == null)
+                {
                     return Results.NotFound();
-
+                }
                 return Results.Ok(ToDTO(order));
             })
             .WithName("GetOrderById")
@@ -47,14 +48,12 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPut("/api/orders/{id:int}", async (int id, [FromBody] UpdateOrderDTO dto, [FromServices] IOrderService orderService) =>
             {
-                if (id != dto.OrderId)
-                    return Results.BadRequest("IDs do not match");
-
                 var existing = await orderService.GetOrderByIdAsync(id);
                 if (existing == null)
+                {
                     return Results.NotFound();
-
-                var order = await orderService.UpdateAsync(dto.OrderId, dto.ReservationId, dto.EmployeeId, dto.OrderDate, dto.TotalAmount);
+                }
+                var order = await orderService.UpdateAsync(id, dto.ReservationId, dto.EmployeeId, dto.OrderDate, dto.TotalAmount);
                 return Results.Ok(ToDTO(order));
             })
             .WithName("UpdateOrder")
@@ -68,8 +67,9 @@ namespace RestaurantReservation.API.Endpoints
             {
                 var existing = await orderService.GetOrderByIdAsync(id);
                 if (existing == null)
+                {
                     return Results.NotFound();
-
+                }
                 await orderService.DeleteAsync(id);
                 return Results.NoContent();
             })

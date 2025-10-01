@@ -24,8 +24,9 @@ namespace RestaurantReservation.API.Endpoints
             {
                 var table = await tableService.GetTableByIdAsync(id);
                 if (table == null)
+                {
                     return Results.NotFound();
-
+                }
                 return Results.Ok(ToDTO(table));
             })
             .WithName("GetTableById")
@@ -47,14 +48,12 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPut("/api/tables/{id:int}", async (int id, [FromBody] UpdateTableDTO dto, [FromServices] ITableService tableService) =>
             {
-                if (id != dto.TableId)
-                    return Results.BadRequest("IDs do not match");
-
                 var existing = await tableService.GetTableByIdAsync(id);
                 if (existing == null)
+                {
                     return Results.NotFound();
-
-                var table = await tableService.UpdateAsync(dto.TableId, dto.RestaurantId, dto.Capacity);
+                }
+                var table = await tableService.UpdateAsync(id, dto.RestaurantId, dto.Capacity);
                 return Results.Ok(ToDTO(table));
             })
             .WithName("UpdateTable")
@@ -68,15 +67,16 @@ namespace RestaurantReservation.API.Endpoints
             {
                 var existing = await tableService.GetTableByIdAsync(id);
                 if (existing == null)
+                {
                     return Results.NotFound();
-
+                }
                 await tableService.DeleteAsync(id);
                 return Results.NoContent();
             })
             .WithName("DeleteTable")
             .WithSummary("Deletes a table by its ID")
             .WithTags("Table")
-            .Produces<TableDTO>(204)
+            .Produces(204)
             .Produces(404);
         }
 

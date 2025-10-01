@@ -95,25 +95,17 @@ namespace RestaurantReservation.Services
 
         public async Task<List<Reservation>> ListReservationsByCustomerAsync(int customerId)
         {
-            var customer = await _customerRepo.GetByIdAsync(customerId) ?? throw new ArgumentException($"Customer with ID {customerId} not found.");
             return await _reservationRepo.GetByCustomerIdAsync(customerId);
         }
 
-        public async Task<List<Order>> ListOrdersAndMenuItemsAsync(int reservationId)
+        public async Task<List<OrderWithItemsDTO>> ListOrdersAndMenuItemsAsync(int reservationId)
         {
-            var reservation = await _reservationRepo.GetByIdAsync(reservationId) ?? throw new ArgumentException($"Reservation with ID {reservationId} not found.");
             return await _reservationRepo.ListOrdersAndMenuItemsAsync(reservationId);
         }
 
         public async Task<List<OrderedMenuItemDTO>> ListOrderedMenuItemsAsync(int reservationId)
         {
-            var reservation = await _reservationRepo.GetByIdAsync(reservationId) ?? throw new ArgumentException($"Reservation with ID {reservationId} not found.");
             return await _reservationRepo.ListOrderedMenuItemsAsync(reservationId);
-        }
-
-        public async Task<List<ReservationDetailsDTO>> GetReservationDetailsAsync()
-        {
-            return await _reservationRepo.GetReservationDetailsAsync();
         }
     }
 }

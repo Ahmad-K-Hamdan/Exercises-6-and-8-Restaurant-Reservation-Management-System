@@ -76,7 +76,6 @@ namespace RestaurantReservation.Services
 
         public async Task<decimal> CalculateAverageOrderAmountByEmployeeAsync(int employeeId)
         {
-            var employee = await _employeeRepo.GetByIdAsync(employeeId) ?? throw new ArgumentException($"Employee with ID {employeeId} not found.");
             return await _orderRepo.CalculateAverageOrderAmountByEmployeeAsync(employeeId);
         }
     }

@@ -8,7 +8,7 @@
         public required string Description { get; set; }
         public required decimal Price { get; set; }
 
-        public required Restaurant Restaurant { get; set; }
+        public Restaurant? Restaurant { get; set; }
         public List<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 
         public override string ToString()

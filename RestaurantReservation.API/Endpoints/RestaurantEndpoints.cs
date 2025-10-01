@@ -24,8 +24,9 @@ namespace RestaurantReservation.API.Endpoints
             {
                 var restaurant = await restaurantService.GetRestaurantByIdAsync(id);
                 if (restaurant == null)
+                {
                     return Results.NotFound();
-
+                }
                 return Results.Ok(ToDTO(restaurant));
             })
             .WithName("GetRestaurantById")
@@ -47,14 +48,12 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPut("/api/restaurants/{id:int}", async (int id, [FromBody] UpdateRestaurantDTO dto, [FromServices] IRestaurantService restaurantService) =>
             {
-                if (id != dto.RestaurantId)
-                    return Results.BadRequest("IDs do not match");
-
                 var existing = await restaurantService.GetRestaurantByIdAsync(id);
                 if (existing == null)
+                {
                     return Results.NotFound();
-
-                var restaurant = await restaurantService.UpdateAsync(dto.RestaurantId, dto.Name, dto.Address, dto.PhoneNumber, dto.OpeningHours);
+                }
+                var restaurant = await restaurantService.UpdateAsync(id, dto.Name, dto.Address, dto.PhoneNumber, dto.OpeningHours);
                 return Results.Ok(ToDTO(restaurant));
             })
             .WithName("UpdateRestaurant")
@@ -68,15 +67,16 @@ namespace RestaurantReservation.API.Endpoints
             {
                 var existing = await restaurantService.GetRestaurantByIdAsync(id);
                 if (existing == null)
+                {
                     return Results.NotFound();
-
+                }
                 await restaurantService.DeleteAsync(id);
                 return Results.NoContent();
             })
             .WithName("DeleteRestaurant")
             .WithSummary("Deletes a restaurant by its ID")
             .WithTags("Restaurant")
-            .Produces<RestaurantDTO>(204)
+            .Produces(204)
             .Produces(404);
         }
 

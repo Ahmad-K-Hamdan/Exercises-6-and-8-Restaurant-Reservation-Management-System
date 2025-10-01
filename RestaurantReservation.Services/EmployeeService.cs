@@ -35,13 +35,13 @@ namespace RestaurantReservation.Services
             {
                 throw new ArgumentException(empFirstName);
             }
-            
+
             var empLastName = EmployeeValidator.ValidateLastName(lastName);
             if (empLastName != null)
             {
                 throw new ArgumentException(empLastName);
             }
-            
+
             var empPosition = EmployeeValidator.ValidatePosition(position);
             if (empPosition != null)
             {
@@ -74,13 +74,13 @@ namespace RestaurantReservation.Services
             {
                 throw new ArgumentException(empFirstName);
             }
-            
+
             var empLastName = EmployeeValidator.ValidateLastName(lastName);
             if (empLastName != null)
             {
                 throw new ArgumentException(empLastName);
             }
-            
+
             var empPosition = EmployeeValidator.ValidatePosition(position);
             if (empPosition != null)
             {

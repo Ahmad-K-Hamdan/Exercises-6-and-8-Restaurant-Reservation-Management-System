@@ -11,8 +11,7 @@ namespace RestaurantReservation.Services.Interfaces
         Task DeleteAsync(int reservationId);
         Task<Reservation> UpdateAsync(int reservationId, int customerId, int restaurantId, int tableId, DateTime reservationDate, int partySize);
         Task<List<Reservation>> ListReservationsByCustomerAsync(int customerId);
-        Task<List<Order>> ListOrdersAndMenuItemsAsync(int reservationId);
+        Task<List<OrderWithItemsDTO>> ListOrdersAndMenuItemsAsync(int reservationId);
         Task<List<OrderedMenuItemDTO>> ListOrderedMenuItemsAsync(int reservationId);
-        Task<List<ReservationDetailsDTO>> GetReservationDetailsAsync();
     }
 }

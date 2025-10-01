@@ -9,9 +9,9 @@
         public required DateTime ReservationDate { get; set; }
         public required int PartySize { get; set; }
 
-        public required Customer Customer { get; set; }
-        public required Restaurant Restaurant { get; set; }
-        public required Table Table { get; set; }
+        public Customer? Customer { get; set; }
+        public Restaurant? Restaurant { get; set; }
+        public Table? Table { get; set; }
         public List<Order> Orders { get; set; } = new List<Order>();
 
         public override string ToString()
