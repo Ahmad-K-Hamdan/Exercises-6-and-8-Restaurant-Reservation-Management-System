@@ -6,7 +6,7 @@ using RestaurantReservation.Services.Interfaces;
 
 namespace RestaurantReservation.Services
 {
-    public class CustomerService: ICustomerService
+    public class CustomerService : ICustomerService
     {
         private readonly ICustomerRepository _customerRepo;
 
@@ -18,6 +18,11 @@ namespace RestaurantReservation.Services
         public async Task<List<Customer>> ViewAllAsync()
         {
             return await _customerRepo.GetAllAsync();
+        }
+
+        public async Task<Customer?> GetCustomerByIdAsync(int customerId)
+        {
+            return await _customerRepo.GetByIdAsync(customerId);
         }
 
         public async Task<Customer> AddAsync(string firstName, string lastName, string email, string phoneNumber)
@@ -56,13 +61,13 @@ namespace RestaurantReservation.Services
 
         public async Task DeleteAsync(int customerId)
         {
-            var customer = await GetCustomerByIdAsync(customerId);
+            var customer = await FindCustomerByIdAsync(customerId);
             await _customerRepo.DeleteAsync(customer);
         }
 
         public async Task<Customer> UpdateAsync(int customerId, string firstName, string lastName, string email, string phoneNumber)
         {
-            var customer = await GetCustomerByIdAsync(customerId);
+            var customer = await FindCustomerByIdAsync(customerId);
 
             var cusFirstName = CustomerValidator.ValidateFirstName(firstName);
             if (cusFirstName != null)
@@ -103,7 +108,7 @@ namespace RestaurantReservation.Services
             return await _customerRepo.FindCustomersByPartySizeAsync(minPartySize);
         }
 
-        private async Task<Customer> GetCustomerByIdAsync(int customerId)
+        private async Task<Customer> FindCustomerByIdAsync(int customerId)
         {
             var customer = await _customerRepo.GetByIdAsync(customerId);
             if (customer == null)
