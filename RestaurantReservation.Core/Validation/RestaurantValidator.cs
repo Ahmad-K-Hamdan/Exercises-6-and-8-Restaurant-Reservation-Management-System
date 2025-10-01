@@ -54,7 +54,7 @@ namespace RestaurantReservation.Core.Validation
 
             if (!Regex.IsMatch(phoneNumber, @"^\+?[1-9][0-9]{7,14}$"))
             {
-                Console.WriteLine(ValidationMessages.PhoneInvalid);
+                return ValidationMessages.PhoneInvalid;
             }
 
             return null;
