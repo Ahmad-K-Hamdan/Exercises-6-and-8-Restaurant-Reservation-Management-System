@@ -1,9 +1,9 @@
 ﻿using RestaurantReservation.Db.Models;
-using RestaurantReservation.Core.Validation;
-using RestaurantReservation.Services.Interfaces;
+using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Db.Repositories.Interfaces;
+using RestaurantReservation.Shared.DTOs.Order;
 
-namespace RestaurantReservation.Services
+namespace RestaurantReservation.Core.Services
 {
     public class OrderService : IOrderService
     {
@@ -28,28 +28,17 @@ namespace RestaurantReservation.Services
             return await _orderRepo.GetByIdAsync(orderId);
         }
 
-        public async Task<Order> AddAsync(int reservationId, int employeeId, DateTime orderDate, decimal totalAmount)
+        public async Task<Order> AddAsync(CreateOrderDTO dto)
         {
-            var reservation = await _reservationRepo.GetByIdAsync(reservationId) ?? throw new ArgumentException($"Reservation with ID {reservationId} not found.");
-            var employee = await _employeeRepo.GetByIdAsync(employeeId) ?? throw new ArgumentException($"Employee with ID {employeeId} not found.");
-            var orderDateValidation = OrderValidator.ValidateOrderDate(orderDate.ToString("yyyy-MM-dd HH:mm"));
-            if (orderDateValidation != null)
-            {
-                throw new ArgumentException(orderDateValidation);
-            }
-
-            var totalAmountValidation = OrderValidator.ValidateTotalAmount(totalAmount.ToString());
-            if (totalAmountValidation != null)
-            {
-                throw new ArgumentException(totalAmountValidation);
-            }
+            var reservation = await _reservationRepo.GetByIdAsync(dto.ReservationId) ?? throw new ArgumentException($"Reservation with ID {dto.ReservationId} not found.");
+            var employee = await _employeeRepo.GetByIdAsync(dto.EmployeeId) ?? throw new ArgumentException($"Employee with ID {dto.EmployeeId} not found.");
 
             var newOrder = new Order
             {
-                ReservationId = reservationId,
-                EmployeeId = employeeId,
-                OrderDate = orderDate,
-                TotalAmount = totalAmount
+                ReservationId = dto.ReservationId,
+                EmployeeId = dto.EmployeeId,
+                OrderDate = dto.OrderDate,
+                TotalAmount = dto.TotalAmount
             };
 
             return await _orderRepo.AddAsync(newOrder);
@@ -61,13 +50,14 @@ namespace RestaurantReservation.Services
             await _orderRepo.DeleteAsync(order);
         }
 
-        public async Task<Order> UpdateAsync(int orderId, int reservationId, int employeeId, DateTime orderDate, decimal totalAmount)
+        public async Task<Order> UpdateAsync(int orderId, UpdateOrderDTO dto)
         {
             var order = await _orderRepo.GetByIdAsync(orderId) ?? throw new ArgumentException($"Order with ID {orderId} not found.");
-            order.ReservationId = reservationId;
-            order.EmployeeId = employeeId;
-            order.OrderDate = orderDate;
-            order.TotalAmount = totalAmount;
+
+            order.ReservationId = dto.ReservationId;
+            order.EmployeeId = dto.EmployeeId;
+            order.OrderDate = dto.OrderDate;
+            order.TotalAmount = dto.TotalAmount;
 
             return await _orderRepo.UpdateAsync(order);
         }

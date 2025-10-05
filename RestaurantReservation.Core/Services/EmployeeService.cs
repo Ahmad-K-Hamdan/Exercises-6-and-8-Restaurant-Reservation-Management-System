@@ -1,20 +1,24 @@
 ﻿using RestaurantReservation.Db.Models;
-using RestaurantReservation.Core.Validation;
-using RestaurantReservation.Core.DTOs;
 using RestaurantReservation.Db.Repositories.Interfaces;
-using RestaurantReservation.Services.Interfaces;
+using RestaurantReservation.Core.Services.Interfaces;
+using RestaurantReservation.Shared.DTOs.Employee;
+using FluentValidation;
 
-namespace RestaurantReservation.Services
+namespace RestaurantReservation.Core.Services
 {
     public class EmployeeService : IEmployeeService
     {
         private readonly IEmployeeRepository _employeeRepo;
         private readonly IRestaurantRepository _restaurantRepo;
+        private readonly IValidator<CreateEmployeeDTO> _createValidator;
+        private readonly IValidator<UpdateEmployeeDTO> _updateValidator;
 
-        public EmployeeService(IEmployeeRepository employeeRepo, IRestaurantRepository restaurantRepo)
+        public EmployeeService(IEmployeeRepository employeeRepo, IRestaurantRepository restaurantRepo, IValidator<CreateEmployeeDTO> createValidator, IValidator<UpdateEmployeeDTO> updateValidator)
         {
             _employeeRepo = employeeRepo;
             _restaurantRepo = restaurantRepo;
+            _createValidator = createValidator;
+            _updateValidator = updateValidator;
         }
 
         public async Task<List<Employee>> ViewAllAsync()
@@ -27,33 +31,16 @@ namespace RestaurantReservation.Services
             return await _employeeRepo.GetByIdAsync(employeeId);
         }
 
-        public async Task<Employee> AddAsync(int restaurantId, string firstName, string lastName, string position)
+        public async Task<Employee> AddAsync(CreateEmployeeDTO dto)
         {
-            var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId) ?? throw new ArgumentException($"Restaurant with ID {restaurantId} not found.");
-            var empFirstName = EmployeeValidator.ValidateFirstName(firstName);
-            if (empFirstName != null)
-            {
-                throw new ArgumentException(empFirstName);
-            }
-
-            var empLastName = EmployeeValidator.ValidateLastName(lastName);
-            if (empLastName != null)
-            {
-                throw new ArgumentException(empLastName);
-            }
-
-            var empPosition = EmployeeValidator.ValidatePosition(position);
-            if (empPosition != null)
-            {
-                throw new ArgumentException(empPosition);
-            }
+            var restaurant = await _restaurantRepo.GetByIdAsync(dto.RestaurantId) ?? throw new ArgumentException($"Restaurant with ID {dto.RestaurantId} not found.");
 
             var newEmployee = new Employee
             {
-                RestaurantId = restaurantId,
-                FirstName = firstName,
-                LastName = lastName,
-                Position = position
+                RestaurantId = dto.RestaurantId,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                Position = dto.Position
             };
 
             return await _employeeRepo.AddAsync(newEmployee);
@@ -65,30 +52,13 @@ namespace RestaurantReservation.Services
             await _employeeRepo.DeleteAsync(employee);
         }
 
-        public async Task<Employee> UpdateAsync(int employeeId, string firstName, string lastName, string position)
+        public async Task<Employee> UpdateAsync(int employeeId, UpdateEmployeeDTO dto)
         {
             var employee = await _employeeRepo.GetByIdAsync(employeeId) ?? throw new ArgumentException($"Employee with ID {employeeId} not found.");
-            var empFirstName = EmployeeValidator.ValidateFirstName(firstName);
-            if (empFirstName != null)
-            {
-                throw new ArgumentException(empFirstName);
-            }
 
-            var empLastName = EmployeeValidator.ValidateLastName(lastName);
-            if (empLastName != null)
-            {
-                throw new ArgumentException(empLastName);
-            }
-
-            var empPosition = EmployeeValidator.ValidatePosition(position);
-            if (empPosition != null)
-            {
-                throw new ArgumentException(empPosition);
-            }
-
-            employee.FirstName = firstName;
-            employee.LastName = lastName;
-            employee.Position = position;
+            employee.FirstName = dto.FirstName;
+            employee.LastName = dto.LastName;
+            employee.Position = dto.Position;
 
             return await _employeeRepo.UpdateAsync(employee);
         }

@@ -1,4 +1,4 @@
-﻿namespace RestaurantReservation.Core.DTOs
+﻿namespace RestaurantReservation.Shared.DTOs.Employee
 {
     public class EmployeeDetailsDTO
     {

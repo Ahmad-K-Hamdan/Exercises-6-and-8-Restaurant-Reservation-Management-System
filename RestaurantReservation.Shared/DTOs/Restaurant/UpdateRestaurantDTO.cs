@@ -1,4 +1,4 @@
-﻿namespace RestaurantReservation.API.DTOs.Restaurant
+﻿namespace RestaurantReservation.Shared.DTOs.Restaurant
 {
     public record UpdateRestaurantDTO(
         string Name,

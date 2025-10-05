@@ -1,13 +1,14 @@
 using RestaurantReservation.Db.Models;
+using RestaurantReservation.Shared.DTOs.OrderItem;
 
-namespace RestaurantReservation.Services.Interfaces
+namespace RestaurantReservation.Core.Services.Interfaces
 {
     public interface IOrderItemService
     {
-        Task<OrderItem> AddAsync(int orderId, int menuItemId, int quantity);
         Task<List<OrderItem>> ViewAllAsync();
-        Task DeleteAsync(int orderItemId);
         Task<OrderItem?> GetOrderItemByIdAsync(int orderItemId);
-        Task<OrderItem> UpdateAsync(int orderItemId, int orderId, int itemId, int quantity);
+        Task<OrderItem> AddAsync(CreateOrderItemDTO dto);
+        Task DeleteAsync(int orderItemId);
+        Task<OrderItem> UpdateAsync(int orderItemId, UpdateOrderItemDTO dto);
     }
 }

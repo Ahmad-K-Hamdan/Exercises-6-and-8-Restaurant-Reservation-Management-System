@@ -1,9 +1,9 @@
-﻿using RestaurantReservation.Db.Models;
-using RestaurantReservation.Core.Validation;
+﻿using RestaurantReservation.Core.Services.Interfaces;
+using RestaurantReservation.Db.Models;
 using RestaurantReservation.Db.Repositories.Interfaces;
-using RestaurantReservation.Services.Interfaces;
+using RestaurantReservation.Shared.DTOs.OrderItem;
 
-namespace RestaurantReservation.Services
+namespace RestaurantReservation.Core.Services
 {
     public class OrderItemService : IOrderItemService
     {
@@ -28,21 +28,16 @@ namespace RestaurantReservation.Services
             return await _orderItemRepo.GetByIdAsync(orderItemId);
         }
 
-        public async Task<OrderItem> AddAsync(int orderId, int menuItemId, int quantity)
+        public async Task<OrderItem> AddAsync(CreateOrderItemDTO dto)
         {
-            var order = await _orderRepo.GetByIdAsync(orderId) ?? throw new ArgumentException($"Order with ID {orderId} not found.");
-            var menuItem = await _menuItemRepo.GetByIdAsync(menuItemId) ?? throw new ArgumentException($"Menu item with ID {menuItemId} not found.");
-            var quantityValidation = OrderItemValidator.ValidateQuantity(quantity.ToString());
-            if (quantityValidation != null)
-            {
-                throw new ArgumentException(quantityValidation);
-            }
+            var order = await _orderRepo.GetByIdAsync(dto.OrderId) ?? throw new ArgumentException($"Order with ID {dto.OrderId} not found.");
+            var menuItem = await _menuItemRepo.GetByIdAsync(dto.ItemId) ?? throw new ArgumentException($"Menu item with ID {dto.ItemId} not found.");
 
             var newOrderItem = new OrderItem
             {
-                OrderId = orderId,
-                ItemId = menuItemId,
-                Quantity = quantity
+                OrderId = dto.OrderId,
+                ItemId = dto.ItemId,
+                Quantity = dto.Quantity
             };
 
             return await _orderItemRepo.AddAsync(newOrderItem);
@@ -54,18 +49,13 @@ namespace RestaurantReservation.Services
             await _orderItemRepo.DeleteAsync(orderItem);
         }
 
-        public async Task<OrderItem> UpdateAsync(int orderItemId, int orderId, int itemId, int quantity)
+        public async Task<OrderItem> UpdateAsync(int orderItemId, UpdateOrderItemDTO dto)
         {
             var orderItem = await _orderItemRepo.GetByIdAsync(orderItemId) ?? throw new ArgumentException($"Order item with ID {orderItemId} not found.");
-            var quantityValidation = OrderItemValidator.ValidateQuantity(quantity.ToString());
-            if (quantityValidation != null)
-            {
-                throw new ArgumentException(quantityValidation);
-            }
 
-            orderItem.OrderId = orderId;
-            orderItem.ItemId = itemId;
-            orderItem.Quantity = quantity;
+            orderItem.OrderId = dto.OrderId;
+            orderItem.ItemId = dto.ItemId;
+            orderItem.Quantity = dto.Quantity;
 
             return await _orderItemRepo.UpdateAsync(orderItem);
         }

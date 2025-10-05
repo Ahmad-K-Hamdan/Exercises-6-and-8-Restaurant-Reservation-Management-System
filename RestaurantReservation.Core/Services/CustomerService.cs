@@ -1,18 +1,25 @@
 ﻿using RestaurantReservation.Db.Models;
-using RestaurantReservation.Core.Validation;
-using RestaurantReservation.Core.DTOs;
 using RestaurantReservation.Db.Repositories.Interfaces;
-using RestaurantReservation.Services.Interfaces;
+using RestaurantReservation.Core.Services.Interfaces;
+using RestaurantReservation.Shared.DTOs.Customer;
+using FluentValidation;
+using FluentValidation.Results;
 
 namespace RestaurantReservation.Core.Services
 {
     public class CustomerService : ICustomerService
     {
         private readonly ICustomerRepository _customerRepo;
+        private readonly IValidator<CreateCustomerDTO> _createValidator;
+        private readonly IValidator<UpdateCustomerDTO> _updateValidator;
+        private readonly IValidator<PartySizeDTO> _partySizeValidator;
 
-        public CustomerService(ICustomerRepository customerRepo)
+        public CustomerService(ICustomerRepository customerRepo, IValidator<CreateCustomerDTO> createValidator, IValidator<UpdateCustomerDTO> updateValidator, IValidator<PartySizeDTO> partySizeValidator)
         {
             _customerRepo = customerRepo;
+            _createValidator = createValidator;
+            _updateValidator = updateValidator;
+            _partySizeValidator = partySizeValidator;
         }
 
         public async Task<List<Customer>> ViewAllAsync()
@@ -25,38 +32,20 @@ namespace RestaurantReservation.Core.Services
             return await _customerRepo.GetByIdAsync(customerId);
         }
 
-        public async Task<Customer> AddAsync(string firstName, string lastName, string email, string phoneNumber)
+        public async Task<Customer> AddAsync(CreateCustomerDTO dto)
         {
-            var cusFirstName = CustomerValidator.ValidateFirstName(firstName);
-            if (cusFirstName != null)
+            ValidationResult result = await _createValidator.ValidateAsync(dto);
+            if (!result.IsValid)
             {
-                throw new ArgumentException(cusFirstName);
-            }
-
-            var cusLastName = CustomerValidator.ValidateLastName(lastName);
-            if (cusLastName != null)
-            {
-                throw new ArgumentException(cusLastName);
-            }
-
-            var cusEmail = CustomerValidator.ValidateEmail(email);
-            if (cusEmail != null)
-            {
-                throw new ArgumentException(cusEmail);
-            }
-
-            var cusPhoneNumber = CustomerValidator.ValidatePhoneNumber(phoneNumber);
-            if (cusPhoneNumber != null)
-            {
-                throw new ArgumentException(cusPhoneNumber);
+                throw new ArgumentException(string.Join("\n", result.Errors.Select(e => e.ErrorMessage)));
             }
 
             var newCustomer = new Customer
             {
-                FirstName = firstName,
-                LastName = lastName,
-                Email = email,
-                PhoneNumber = phoneNumber
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                Email = dto.Email,
+                PhoneNumber = dto.PhoneNumber
             };
 
             return await _customerRepo.AddAsync(newCustomer);
@@ -68,47 +57,33 @@ namespace RestaurantReservation.Core.Services
             await _customerRepo.DeleteAsync(customer);
         }
 
-        public async Task<Customer> UpdateAsync(int customerId, string firstName, string lastName, string email, string phoneNumber)
+        public async Task<Customer> UpdateAsync(int customerId, UpdateCustomerDTO dto)
         {
-            var customer = await _customerRepo.GetByIdAsync(customerId) ?? throw new ArgumentException($"Customer with ID {customerId} not found.");
-            var cusFirstName = CustomerValidator.ValidateFirstName(firstName);
-            if (cusFirstName != null)
+            var customer = await _customerRepo.GetByIdAsync(customerId)
+                ?? throw new KeyNotFoundException($"Customer with ID {customerId} not found.");
+
+            ValidationResult result = await _updateValidator.ValidateAsync(dto);
+            if (!result.IsValid)
             {
-                throw new ArgumentException(cusFirstName);
+                throw new ArgumentException(string.Join("\n", result.Errors.Select(e => e.ErrorMessage)));
             }
 
-            var cusLastName = CustomerValidator.ValidateLastName(lastName);
-            if (cusLastName != null)
-            {
-                throw new ArgumentException(cusLastName);
-            }
-
-            var cusEmail = CustomerValidator.ValidateEmail(email);
-            if (cusEmail != null)
-            {
-                throw new ArgumentException(cusEmail);
-            }
-
-            var cusPhoneNumber = CustomerValidator.ValidatePhoneNumber(phoneNumber);
-            if (cusPhoneNumber != null)
-            {
-                throw new ArgumentException(cusPhoneNumber);
-            }
-
-            customer.FirstName = firstName;
-            customer.LastName = lastName;
-            customer.Email = email;
-            customer.PhoneNumber = phoneNumber;
+            customer.FirstName = dto.FirstName;
+            customer.LastName = dto.LastName;
+            customer.Email = dto.Email;
+            customer.PhoneNumber = dto.PhoneNumber;
 
             return await _customerRepo.UpdateAsync(customer);
         }
 
         public async Task<List<CustomerDetailsDTO>> FindCustomersByPartySizeAsync(int minPartySize)
         {
-            var partySizeValidation = ReservationValidator.ValidatePartySize(minPartySize.ToString());
-            if (partySizeValidation != null)
+            var dto = new PartySizeDTO { PartySize = minPartySize };
+
+            ValidationResult result = await _partySizeValidator.ValidateAsync(dto);
+            if (!result.IsValid)
             {
-                throw new ArgumentException(partySizeValidation);
+                throw new ArgumentException(string.Join("\n", result.Errors.Select(e => e.ErrorMessage)));
             }
 
             return await _customerRepo.FindCustomersByPartySizeAsync(minPartySize);

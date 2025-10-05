@@ -1,9 +1,9 @@
-﻿using RestaurantReservation.Db.Models;
-using RestaurantReservation.Core.Validation;
+﻿using RestaurantReservation.Core.Services.Interfaces;
+using RestaurantReservation.Db.Models;
 using RestaurantReservation.Db.Repositories.Interfaces;
-using RestaurantReservation.Services.Interfaces;
+using RestaurantReservation.Shared.DTOs.MenuItem;
 
-namespace RestaurantReservation.Services
+namespace RestaurantReservation.Core.Services
 {
     public class MenuItemService : IMenuItemService
     {
@@ -26,33 +26,16 @@ namespace RestaurantReservation.Services
             return await _menuItemRepo.GetByIdAsync(menuItemId);
         }
 
-        public async Task<MenuItem> AddAsync(int restaurantId, string name, string description, decimal price)
+        public async Task<MenuItem> AddAsync(CreateMenuItemDTO dto)
         {
-            var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId) ?? throw new ArgumentException($"Restaurant with ID {restaurantId} not found.");
-            var menuItemName = MenuItemValidator.ValidateMenuItemName(name);
-            if (menuItemName != null)
-            {
-                throw new ArgumentException(menuItemName);
-            }
-
-            var menuItemDescription = MenuItemValidator.ValidateDescription(description);
-            if (menuItemDescription != null)
-            {
-                throw new ArgumentException(menuItemDescription);
-            }
-
-            var menuItemPrice = MenuItemValidator.ValidatePrice(price.ToString());
-            if (menuItemPrice != null)
-            {
-                throw new ArgumentException(menuItemPrice);
-            }
+            var restaurant = await _restaurantRepo.GetByIdAsync(dto.RestaurantId) ?? throw new ArgumentException($"Restaurant with ID {dto.RestaurantId} not found.");
 
             var newMenuItem = new MenuItem
             {
-                RestaurantId = restaurantId,
-                Name = name,
-                Description = description,
-                Price = price
+                RestaurantId = dto.RestaurantId,
+                Name = dto.Name,
+                Description = dto.Description,
+                Price = dto.Price
             };
 
             return await _menuItemRepo.AddAsync(newMenuItem);
@@ -64,30 +47,13 @@ namespace RestaurantReservation.Services
             await _menuItemRepo.DeleteAsync(menuItem);
         }
 
-        public async Task<MenuItem> UpdateAsync(int menuItemId, string name, string description, decimal price)
+        public async Task<MenuItem> UpdateAsync(int menuItemId, UpdateMenuItemDTO dto)
         {
             var menuItem = await _menuItemRepo.GetByIdAsync(menuItemId) ?? throw new ArgumentException($"Menu item with ID {menuItemId} not found.");
-            var menuItemName = MenuItemValidator.ValidateMenuItemName(name);
-            if (menuItemName != null)
-            {
-                throw new ArgumentException(menuItemName);
-            }
 
-            var menuItemDescription = MenuItemValidator.ValidateDescription(description);
-            if (menuItemDescription != null)
-            {
-                throw new ArgumentException(menuItemDescription);
-            }
-
-            var menuItemPrice = MenuItemValidator.ValidatePrice(price.ToString());
-            if (menuItemPrice != null)
-            {
-                throw new ArgumentException(menuItemPrice);
-            }
-
-            menuItem.Name = name;
-            menuItem.Description = description;
-            menuItem.Price = price;
+            menuItem.Name = dto.Name;
+            menuItem.Description = dto.Description;
+            menuItem.Price = dto.Price;
 
             return await _menuItemRepo.UpdateAsync(menuItem);
         }

@@ -1,15 +1,20 @@
 using System.Text;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RestaurantReservation.API.Auth;
 using RestaurantReservation.API.Endpoints;
 using RestaurantReservation.Core.Services;
+using RestaurantReservation.Core.Services.Interfaces;
+using RestaurantReservation.Core.Validators.CustomerValidators;
+using RestaurantReservation.Core.Validators.EmployeeValidators;
 using RestaurantReservation.Db;
 using RestaurantReservation.Db.Repositories;
 using RestaurantReservation.Db.Repositories.Interfaces;
-using RestaurantReservation.Services;
-using RestaurantReservation.Services.Interfaces;
+using RestaurantReservation.Shared.DTOs.Customer;
+using RestaurantReservation.Shared.DTOs.Employee;
 
 namespace RestaurantReservation.API
 {
@@ -151,6 +156,13 @@ namespace RestaurantReservation.API
             services.AddScoped<IReservationService, ReservationService>();
             services.AddScoped<IRestaurantService, RestaurantService>();
             services.AddScoped<ITableService, TableService>();
+
+            // Register Validators
+            services.AddValidatorsFromAssemblyContaining<CreateCustomerValidator>();
+            services.AddValidatorsFromAssemblyContaining<CreateEmployeeValidator>();
+            services.AddValidatorsFromAssemblyContaining<UpdateCustomerValidator>();
+            services.AddValidatorsFromAssemblyContaining<UpdateEmployeeValidator>();
+            services.AddValidatorsFromAssemblyContaining<PartySizeValidator>();
         }
 
         private static bool InitializeDatabase(IServiceProvider serviceProvider)

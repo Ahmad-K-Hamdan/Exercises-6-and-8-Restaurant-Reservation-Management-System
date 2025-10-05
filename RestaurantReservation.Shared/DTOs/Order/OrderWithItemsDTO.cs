@@ -1,4 +1,6 @@
-namespace RestaurantReservation.Core.DTOs
+using RestaurantReservation.Shared.DTOs.MenuItem;
+
+namespace RestaurantReservation.Shared.DTOs.Order
 {
     public class OrderWithItemsDTO
     {

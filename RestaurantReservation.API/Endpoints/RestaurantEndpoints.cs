@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using RestaurantReservation.API.DTOs.Restaurant;
 using RestaurantReservation.Db.Models;
-using RestaurantReservation.Services.Interfaces;
+using RestaurantReservation.Core.Services.Interfaces;
+using RestaurantReservation.Shared.DTOs.Restaurant;
 
 namespace RestaurantReservation.API.Endpoints
 {
@@ -39,7 +39,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPost("/api/restaurants", async ([FromBody] CreateRestaurantDTO dto, [FromServices] IRestaurantService restaurantService) =>
             {
-                var restaurant = await restaurantService.AddAsync(dto.Name, dto.Address, dto.PhoneNumber, dto.OpeningHours);
+                var restaurant = await restaurantService.AddAsync(dto);
                 return Results.Created($"/api/restaurants/{restaurant.RestaurantId}", ToDTO(restaurant));
             })
             .WithName("AddRestaurant")
@@ -56,7 +56,7 @@ namespace RestaurantReservation.API.Endpoints
                 {
                     return Results.NotFound();
                 }
-                var restaurant = await restaurantService.UpdateAsync(id, dto.Name, dto.Address, dto.PhoneNumber, dto.OpeningHours);
+                var restaurant = await restaurantService.UpdateAsync(id, dto);
                 return Results.Ok(ToDTO(restaurant));
             })
             .WithName("UpdateRestaurant")

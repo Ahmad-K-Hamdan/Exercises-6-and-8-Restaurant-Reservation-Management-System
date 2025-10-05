@@ -1,10 +1,11 @@
 ﻿using RestaurantReservation.Db.Models;
-using RestaurantReservation.Core.Validation;
-using RestaurantReservation.Core.DTOs;
-using RestaurantReservation.Services.Interfaces;
+using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Db.Repositories.Interfaces;
+using RestaurantReservation.Shared.DTOs.MenuItem;
+using RestaurantReservation.Shared.DTOs.Order;
+using RestaurantReservation.Shared.DTOs.Reservation;
 
-namespace RestaurantReservation.Services
+namespace RestaurantReservation.Core.Services
 {
     public class ReservationService : IReservationService
     {
@@ -31,30 +32,19 @@ namespace RestaurantReservation.Services
             return await _reservationRepo.GetByIdAsync(reservationId);
         }
 
-        public async Task<Reservation> AddAsync(int customerId, int restaurantId, int tableId, DateTime reservationDate, int partySize)
+        public async Task<Reservation> AddAsync(CreateReservationDTO dto)
         {
-            var customer = await _customerRepo.GetByIdAsync(customerId) ?? throw new ArgumentException($"Customer with ID {customerId} not found.");
-            var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId) ?? throw new ArgumentException($"Restaurant with ID {restaurantId} not found.");
-            var table = await _tableRepo.GetByIdAsync(tableId) ?? throw new ArgumentException($"Table with ID {tableId} not found.");
-            var reservationDateValidation = ReservationValidator.ValidateReservationDate(reservationDate.ToString("yyyy-MM-dd HH:mm"));
-            if (reservationDateValidation != null)
-            {
-                throw new ArgumentException(reservationDateValidation);
-            }
-
-            var partySizeValidation = ReservationValidator.ValidatePartySize(partySize.ToString());
-            if (partySizeValidation != null)
-            {
-                throw new ArgumentException(partySizeValidation);
-            }
+            var customer = await _customerRepo.GetByIdAsync(dto.CustomerId) ?? throw new ArgumentException($"Customer with ID {dto.CustomerId} not found.");
+            var restaurant = await _restaurantRepo.GetByIdAsync(dto.RestaurantId) ?? throw new ArgumentException($"Restaurant with ID {dto.RestaurantId} not found.");
+            var table = await _tableRepo.GetByIdAsync(dto.TableId) ?? throw new ArgumentException($"Table with ID {dto.TableId} not found.");
 
             var newReservation = new Reservation
             {
-                CustomerId = customerId,
-                RestaurantId = restaurantId,
-                TableId = tableId,
-                ReservationDate = reservationDate,
-                PartySize = partySize
+                CustomerId = dto.CustomerId,
+                RestaurantId = dto.RestaurantId,
+                TableId = dto.TableId,
+                ReservationDate = dto.ReservationDate,
+                PartySize = dto.PartySize
             };
 
             return await _reservationRepo.AddAsync(newReservation);
@@ -66,26 +56,15 @@ namespace RestaurantReservation.Services
             await _reservationRepo.DeleteAsync(reservation);
         }
 
-        public async Task<Reservation> UpdateAsync(int reservationId, int customerId, int restaurantId, int tableId, DateTime reservationDate, int partySize)
+        public async Task<Reservation> UpdateAsync(int reservationId, UpdateReservationDTO dto)
         {
             var reservation = await _reservationRepo.GetByIdAsync(reservationId) ?? throw new ArgumentException($"Reservation with ID {reservationId} not found.");
-            var reservationDateValidation = ReservationValidator.ValidateReservationDate(reservationDate.ToString("yyyy-MM-dd HH:mm"));
-            if (reservationDateValidation != null)
-            {
-                throw new ArgumentException(reservationDateValidation);
-            }
 
-            var partySizeValidation = ReservationValidator.ValidatePartySize(partySize.ToString());
-            if (partySizeValidation != null)
-            {
-                throw new ArgumentException(partySizeValidation);
-            }
-
-            reservation.CustomerId = customerId;
-            reservation.RestaurantId = restaurantId;
-            reservation.TableId = tableId;
-            reservation.ReservationDate = reservationDate;
-            reservation.PartySize = partySize;
+            reservation.CustomerId = dto.CustomerId;
+            reservation.RestaurantId = dto.RestaurantId;
+            reservation.TableId = dto.TableId;
+            reservation.ReservationDate = dto.ReservationDate;
+            reservation.PartySize = dto.PartySize;
 
             return await _reservationRepo.UpdateAsync(reservation);
         }

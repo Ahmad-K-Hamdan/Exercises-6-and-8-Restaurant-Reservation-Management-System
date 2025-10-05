@@ -1,4 +1,4 @@
-﻿namespace RestaurantReservation.API.DTOs.Table
+﻿namespace RestaurantReservation.Shared.DTOs.Table
 {
     public record CreateTableDTO(
         int Capacity,

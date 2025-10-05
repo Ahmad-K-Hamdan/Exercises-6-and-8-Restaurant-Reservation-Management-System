@@ -1,4 +1,4 @@
-namespace RestaurantReservation.API.DTOs.Order
+namespace RestaurantReservation.Shared.DTOs.Order
 {
     public record OrderDTO(
         int OrderId,

@@ -1,9 +1,9 @@
 ﻿using RestaurantReservation.Db.Models;
-using RestaurantReservation.Core.Validation;
-using RestaurantReservation.Services.Interfaces;
+using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Db.Repositories.Interfaces;
+using RestaurantReservation.Shared.DTOs.Restaurant;
 
-namespace RestaurantReservation.Services
+namespace RestaurantReservation.Core.Services
 {
     public class RestaurantService : IRestaurantService
     {
@@ -24,38 +24,15 @@ namespace RestaurantReservation.Services
             return await _restaurantRepo.GetByIdAsync(restaurantId);
         }
 
-        public async Task<Restaurant> AddAsync(string name, string address, string phoneNumber, string openingHours)
+        public async Task<Restaurant> AddAsync(CreateRestaurantDTO dto)
         {
-            var restName = RestaurantValidator.ValidateRestaurantName(name);
-            if (restName != null)
-            {
-                throw new ArgumentException(restName);
-            }
-
-            var restAddress = RestaurantValidator.ValidateAddress(address);
-            if (restAddress != null)
-            {
-                throw new ArgumentException(restAddress);
-            }
-
-            var restPhoneNumber = RestaurantValidator.ValidatePhoneNumber(phoneNumber);
-            if (restPhoneNumber != null)
-            {
-                throw new ArgumentException(restPhoneNumber);
-            }
-
-            var restOpeningHours = RestaurantValidator.ValidateTimeSpan(openingHours);
-            if (restOpeningHours != null)
-            {
-                throw new ArgumentException(restOpeningHours);
-            }
 
             var newRestaurant = new Restaurant
             {
-                Name = name,
-                Address = address,
-                PhoneNumber = phoneNumber,
-                OpeningHours = TimeSpan.Parse(openingHours)
+                Name = dto.Name,
+                Address = dto.Address,
+                PhoneNumber = dto.PhoneNumber,
+                OpeningHours = TimeSpan.Parse(dto.OpeningHours)
             };
 
             return await _restaurantRepo.AddAsync(newRestaurant);
@@ -67,37 +44,14 @@ namespace RestaurantReservation.Services
             await _restaurantRepo.DeleteAsync(restaurant);
         }
 
-        public async Task<Restaurant> UpdateAsync(int restaurantId, string name, string address, string phoneNumber, string openingHours)
+        public async Task<Restaurant> UpdateAsync(int restaurantId, UpdateRestaurantDTO dto)
         {
             var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId) ?? throw new ArgumentException($"Restaurant with ID {restaurantId} not found.");
-            var restName = RestaurantValidator.ValidateRestaurantName(name);
-            if (restName != null)
-            {
-                throw new ArgumentException(restName);
-            }
 
-            var restAddress = RestaurantValidator.ValidateAddress(address);
-            if (restAddress != null)
-            {
-                throw new ArgumentException(restAddress);
-            }
-
-            var restPhoneNumber = RestaurantValidator.ValidatePhoneNumber(phoneNumber);
-            if (restPhoneNumber != null)
-            {
-                throw new ArgumentException(restPhoneNumber);
-            }
-
-            var restOpeningHours = RestaurantValidator.ValidateTimeSpan(openingHours);
-            if (restOpeningHours != null)
-            {
-                throw new ArgumentException(restOpeningHours);
-            }
-
-            restaurant.Name = name;
-            restaurant.Address = address;
-            restaurant.PhoneNumber = phoneNumber;
-            restaurant.OpeningHours = TimeSpan.Parse(openingHours);
+            restaurant.Name = dto.Name;
+            restaurant.Address = dto.Address;
+            restaurant.PhoneNumber = dto.PhoneNumber;
+            restaurant.OpeningHours = TimeSpan.Parse(dto.OpeningHours);
 
             return await _restaurantRepo.UpdateAsync(restaurant);
         }

@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using RestaurantReservation.Core.DTOs;
 using RestaurantReservation.Db.Models;
 using RestaurantReservation.Db.Repositories.Interfaces;
+using RestaurantReservation.Shared.DTOs.Employee;
 
 namespace RestaurantReservation.Db.Repositories
 {

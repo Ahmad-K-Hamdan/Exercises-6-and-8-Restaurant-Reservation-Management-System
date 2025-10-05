@@ -1,9 +1,9 @@
 ﻿using RestaurantReservation.Db.Models;
-using RestaurantReservation.Core.Validation;
-using RestaurantReservation.Services.Interfaces;
+using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Db.Repositories.Interfaces;
+using RestaurantReservation.Shared.DTOs.Table;
 
-namespace RestaurantReservation.Services
+namespace RestaurantReservation.Core.Services
 {
     public class TableService : ITableService
     {
@@ -26,19 +26,14 @@ namespace RestaurantReservation.Services
             return await _tableRepo.GetByIdAsync(tableId);
         }
 
-        public async Task<Table> AddAsync(int restaurantId, int capacity)
+        public async Task<Table> AddAsync(CreateTableDTO dto)
         {
-            var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId) ?? throw new ArgumentException($"Restaurant with ID {restaurantId} not found.");
-            var tableCapacity = TableValidator.ValidateCapacity(capacity.ToString());
-            if (tableCapacity != null)
-            {
-                throw new ArgumentException(tableCapacity);
-            }
+            var restaurant = await _restaurantRepo.GetByIdAsync(dto.RestaurantId) ?? throw new ArgumentException($"Restaurant with ID {dto.RestaurantId} not found.");
 
             var newTable = new Table
             {
-                RestaurantId = restaurantId,
-                Capacity = capacity,
+                RestaurantId = dto.RestaurantId,
+                Capacity = dto.Capacity,
             };
 
             return await _tableRepo.AddAsync(newTable);
@@ -50,17 +45,12 @@ namespace RestaurantReservation.Services
             await _tableRepo.DeleteAsync(table);
         }
 
-        public async Task<Table> UpdateAsync(int tableId, int restaurantId, int capacity)
+        public async Task<Table> UpdateAsync(int tableId, UpdateTableDTO dto)
         {
             var table = await _tableRepo.GetByIdAsync(tableId) ?? throw new ArgumentException($"Table with ID {tableId} not found.");
-            var tableCapacity = TableValidator.ValidateCapacity(capacity.ToString());
-            if (tableCapacity != null)
-            {
-                throw new ArgumentException(tableCapacity);
-            }
 
-            table.RestaurantId = restaurantId;
-            table.Capacity = capacity;
+            table.RestaurantId = dto.RestaurantId;
+            table.Capacity = dto.Capacity;
 
             return await _tableRepo.UpdateAsync(table);
         }

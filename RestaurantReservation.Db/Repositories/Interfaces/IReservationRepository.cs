@@ -1,5 +1,6 @@
-using RestaurantReservation.Core.DTOs;
 using RestaurantReservation.Db.Models;
+using RestaurantReservation.Shared.DTOs.MenuItem;
+using RestaurantReservation.Shared.DTOs.Order;
 
 namespace RestaurantReservation.Db.Repositories.Interfaces
 {

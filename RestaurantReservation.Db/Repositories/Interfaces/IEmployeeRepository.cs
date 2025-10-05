@@ -1,5 +1,5 @@
-using RestaurantReservation.Core.DTOs;
 using RestaurantReservation.Db.Models;
+using RestaurantReservation.Shared.DTOs.Employee;
 
 namespace RestaurantReservation.Db.Repositories.Interfaces
 {

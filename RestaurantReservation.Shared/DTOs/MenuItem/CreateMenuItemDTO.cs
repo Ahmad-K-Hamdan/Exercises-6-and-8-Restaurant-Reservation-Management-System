@@ -1,4 +1,4 @@
-namespace RestaurantReservation.API.DTOs.MenuItem
+namespace RestaurantReservation.Shared.DTOs.MenuItem
 {
     public record CreateMenuItemDTO(
         string Name,
