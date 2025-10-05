@@ -31,19 +31,19 @@ namespace RestaurantReservation.Services
             {
                 throw new ArgumentException(restName);
             }
-            
+
             var restAddress = RestaurantValidator.ValidateAddress(address);
             if (restAddress != null)
             {
                 throw new ArgumentException(restAddress);
             }
-            
+
             var restPhoneNumber = RestaurantValidator.ValidatePhoneNumber(phoneNumber);
             if (restPhoneNumber != null)
             {
                 throw new ArgumentException(restPhoneNumber);
             }
-            
+
             var restOpeningHours = RestaurantValidator.ValidateTimeSpan(openingHours);
             if (restOpeningHours != null)
             {
@@ -75,19 +75,19 @@ namespace RestaurantReservation.Services
             {
                 throw new ArgumentException(restName);
             }
-            
+
             var restAddress = RestaurantValidator.ValidateAddress(address);
             if (restAddress != null)
             {
                 throw new ArgumentException(restAddress);
             }
-            
+
             var restPhoneNumber = RestaurantValidator.ValidatePhoneNumber(phoneNumber);
             if (restPhoneNumber != null)
             {
                 throw new ArgumentException(restPhoneNumber);
             }
-            
+
             var restOpeningHours = RestaurantValidator.ValidateTimeSpan(openingHours);
             if (restOpeningHours != null)
             {

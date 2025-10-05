@@ -4,7 +4,7 @@ using RestaurantReservation.Core.DTOs;
 using RestaurantReservation.Db.Repositories.Interfaces;
 using RestaurantReservation.Services.Interfaces;
 
-namespace RestaurantReservation.Services
+namespace RestaurantReservation.Core.Services
 {
     public class CustomerService : ICustomerService
     {
