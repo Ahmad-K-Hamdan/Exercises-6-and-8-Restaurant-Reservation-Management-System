@@ -10,6 +10,7 @@ using RestaurantReservation.Core.Services;
 using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Core.Validators.CustomerValidators;
 using RestaurantReservation.Core.Validators.EmployeeValidators;
+using RestaurantReservation.Core.Validators.MenuItemValidators;
 using RestaurantReservation.Db;
 using RestaurantReservation.Db.Repositories;
 using RestaurantReservation.Db.Repositories.Interfaces;
@@ -163,6 +164,8 @@ namespace RestaurantReservation.API
             services.AddValidatorsFromAssemblyContaining<UpdateCustomerValidator>();
             services.AddValidatorsFromAssemblyContaining<UpdateEmployeeValidator>();
             services.AddValidatorsFromAssemblyContaining<PartySizeValidator>();
+            services.AddValidatorsFromAssemblyContaining<CreateMenuItemValidator>();
+            services.AddValidatorsFromAssemblyContaining<UpdateMenuItemValidator>();
         }
 
         private static bool InitializeDatabase(IServiceProvider serviceProvider)

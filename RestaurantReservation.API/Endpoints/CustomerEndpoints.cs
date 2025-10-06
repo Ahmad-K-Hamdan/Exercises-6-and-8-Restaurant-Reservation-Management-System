@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Db.Models;
@@ -26,7 +27,7 @@ namespace RestaurantReservation.API.Endpoints
                 var customer = await customerService.GetCustomerByIdAsync(id);
                 if (customer == null)
                 {
-                    return Results.NotFound();
+                    return Results.NotFound(new { error = $"Customer with ID {id} not found." });
                 }
                 return Results.Ok(ToDTO(customer));
             })
@@ -46,7 +47,8 @@ namespace RestaurantReservation.API.Endpoints
                 }
                 catch (ArgumentException ex)
                 {
-                    return Results.BadRequest(new { error = ex.Message });
+                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
+                    return Results.BadRequest(errorResponse);
                 }
             })
             .WithName("AddCustomer")
@@ -58,13 +60,20 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPut("/api/customers/{id:int}", async (int id, [FromBody] UpdateCustomerDTO dto, [FromServices] ICustomerService customerService) =>
             {
-                var existing = await customerService.GetCustomerByIdAsync(id);
-                if (existing == null)
+                try
                 {
-                    return Results.NotFound();
+                    var customer = await customerService.UpdateAsync(id, dto);
+                    return Results.Ok(ToDTO(customer));
                 }
-                var customer = await customerService.UpdateAsync(id, dto);
-                return Results.Ok(ToDTO(customer));
+                catch (ArgumentException ex)
+                {
+                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
+                    return Results.BadRequest(errorResponse);
+                }
+                catch (KeyNotFoundException ex)
+                {
+                    return Results.NotFound(new { error = ex.Message });
+                }
             })
             .WithName("UpdateCustomer")
             .WithSummary("Updates an existing customer")
@@ -76,13 +85,15 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapDelete("/api/customers/{id:int}", async (int id, [FromServices] ICustomerService customerService) =>
             {
-                var existing = await customerService.GetCustomerByIdAsync(id);
-                if (existing == null)
+                try
                 {
-                    return Results.NotFound();
+                    await customerService.DeleteAsync(id);
+                    return Results.NoContent();
                 }
-                await customerService.DeleteAsync(id);
-                return Results.NoContent();
+                catch (KeyNotFoundException ex)
+                {
+                    return Results.NotFound(new { error = ex.Message });
+                }
             })
             .WithName("DeleteCustomer")
             .WithSummary("Deletes a customer by its ID")
@@ -91,20 +102,29 @@ namespace RestaurantReservation.API.Endpoints
             .Produces(404)
             .RequireAuthorization();
 
-            app.MapGet("/api/customers/party-size/{minPartySize:int}", async ([AsParameters] PartySizeDTO dto, [FromServices] ICustomerService customerService) =>
+            app.MapGet("/api/customers/party-size", async ([AsParameters] PartySizeDTO dto, [FromServices] ICustomerService customerService) =>
             {
-                var customers = await customerService.FindCustomersByPartySizeAsync(dto.PartySize);
-                if (customers == null || !customers.Any())
+                try
                 {
-                    return Results.NotFound();
+                    var customers = await customerService.FindCustomersByPartySizeAsync(dto.PartySize);
+                    if (customers == null || !customers.Any())
+                    {
+                        return Results.NotFound(new { error = $"No customers found with party size >= {dto.PartySize}." });
+                    }
+                    return Results.Ok(customers);
                 }
-                return Results.Ok(customers);
+                catch (ArgumentException ex)
+                {
+                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
+                    return Results.BadRequest(errorResponse);
+                }
             })
             .WithName("FindCustomersByPartySize")
-            .WithSummary("Finds customers who have made reservations with a party size greater than or equal to the specified minimum")
+            .WithSummary("Finds customers who have made reservations with a party size greater than the specified minimum")
             .WithTags("Customer")
             .Produces<IEnumerable<CustomerDetailsDTO>>(200)
             .Produces(400)
+            .Produces(404)
             .RequireAuthorization();
         }
 

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Db.Models;
 using RestaurantReservation.Shared.DTOs.MenuItem;
+using System.Text.Json;
 
 namespace RestaurantReservation.API.Endpoints
 {
@@ -26,7 +27,7 @@ namespace RestaurantReservation.API.Endpoints
                 var menuItem = await menuItemService.GetMenuItemByIdAsync(id);
                 if (menuItem == null)
                 {
-                    return Results.NotFound();
+                    return Results.NotFound(new { error = $"Menu item with ID {id} not found." });
                 }
                 return Results.Ok(ToDTO(menuItem));
             })
@@ -39,25 +40,45 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPost("/api/menuitems", async ([FromBody] CreateMenuItemDTO dto, [FromServices] IMenuItemService menuItemService) =>
             {
-                var menuItem = await menuItemService.AddAsync(dto);
-                return Results.Created($"/api/menuitems/{menuItem.ItemId}", ToDTO(menuItem));
+                try
+                {
+                    var menuItem = await menuItemService.AddAsync(dto);
+                    return Results.Created($"/api/menuitems/{menuItem.ItemId}", ToDTO(menuItem));
+                }
+                catch (ArgumentException ex)
+                {
+                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
+                    return Results.BadRequest(errorResponse);
+                }
+                catch (KeyNotFoundException ex)
+                {
+                    return Results.NotFound(new { error = ex.Message });
+                }
             })
             .WithName("AddMenuItem")
             .WithSummary("Creates a new menu item")
             .WithTags("MenuItem")
             .Produces<MenuItemDTO>(201)
             .Produces(400)
+            .Produces(404)
             .RequireAuthorization();
 
             app.MapPut("/api/menuitems/{id:int}", async (int id, [FromBody] UpdateMenuItemDTO dto, [FromServices] IMenuItemService menuItemService) =>
             {
-                var existing = await menuItemService.GetMenuItemByIdAsync(id);
-                if (existing == null)
+                try
                 {
-                    return Results.NotFound();
+                    var menuItem = await menuItemService.UpdateAsync(id, dto);
+                    return Results.Ok(ToDTO(menuItem));
                 }
-                var menuItem = await menuItemService.UpdateAsync(id, dto);
-                return Results.Ok(ToDTO(menuItem));
+                catch (ArgumentException ex)
+                {
+                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
+                    return Results.BadRequest(errorResponse);
+                }
+                catch (KeyNotFoundException ex)
+                {
+                    return Results.NotFound(new { error = ex.Message });
+                }
             })
             .WithName("UpdateMenuItem")
             .WithSummary("Updates an existing menu item")
@@ -69,13 +90,15 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapDelete("/api/menuitems/{id:int}", async (int id, [FromServices] IMenuItemService menuItemService) =>
             {
-                var existing = await menuItemService.GetMenuItemByIdAsync(id);
-                if (existing == null)
+                try
                 {
-                    return Results.NotFound();
+                    await menuItemService.DeleteAsync(id);
+                    return Results.NoContent();
                 }
-                await menuItemService.DeleteAsync(id);
-                return Results.NoContent();
+                catch (KeyNotFoundException ex)
+                {
+                    return Results.NotFound(new { error = ex.Message });
+                }
             })
             .WithName("DeleteMenuItem")
             .WithSummary("Deletes a menu item by its ID")

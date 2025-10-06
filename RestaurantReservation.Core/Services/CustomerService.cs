@@ -4,6 +4,7 @@ using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Shared.DTOs.Customer;
 using FluentValidation;
 using FluentValidation.Results;
+using System.Text.Json;
 
 namespace RestaurantReservation.Core.Services
 {
@@ -14,7 +15,10 @@ namespace RestaurantReservation.Core.Services
         private readonly IValidator<UpdateCustomerDTO> _updateValidator;
         private readonly IValidator<PartySizeDTO> _partySizeValidator;
 
-        public CustomerService(ICustomerRepository customerRepo, IValidator<CreateCustomerDTO> createValidator, IValidator<UpdateCustomerDTO> updateValidator, IValidator<PartySizeDTO> partySizeValidator)
+        public CustomerService(ICustomerRepository customerRepo,
+            IValidator<CreateCustomerDTO> createValidator,
+            IValidator<UpdateCustomerDTO> updateValidator,
+            IValidator<PartySizeDTO> partySizeValidator)
         {
             _customerRepo = customerRepo;
             _createValidator = createValidator;
@@ -34,11 +38,8 @@ namespace RestaurantReservation.Core.Services
 
         public async Task<Customer> AddAsync(CreateCustomerDTO dto)
         {
-            ValidationResult result = await _createValidator.ValidateAsync(dto);
-            if (!result.IsValid)
-            {
-                throw new ArgumentException(string.Join("\n", result.Errors.Select(e => e.ErrorMessage)));
-            }
+            var result = await _createValidator.ValidateAsync(dto);
+            ValidateResult(result);
 
             var newCustomer = new Customer
             {
@@ -53,20 +54,16 @@ namespace RestaurantReservation.Core.Services
 
         public async Task DeleteAsync(int customerId)
         {
-            var customer = await _customerRepo.GetByIdAsync(customerId) ?? throw new ArgumentException($"Customer with ID {customerId} not found.");
+            var customer = await _customerRepo.GetByIdAsync(customerId) ?? throw new KeyNotFoundException($"Customer with ID {customerId} not found.");
             await _customerRepo.DeleteAsync(customer);
         }
 
         public async Task<Customer> UpdateAsync(int customerId, UpdateCustomerDTO dto)
         {
-            var customer = await _customerRepo.GetByIdAsync(customerId)
-                ?? throw new KeyNotFoundException($"Customer with ID {customerId} not found.");
+            var result = await _updateValidator.ValidateAsync(dto);
+            ValidateResult(result);
 
-            ValidationResult result = await _updateValidator.ValidateAsync(dto);
-            if (!result.IsValid)
-            {
-                throw new ArgumentException(string.Join("\n", result.Errors.Select(e => e.ErrorMessage)));
-            }
+            var customer = await _customerRepo.GetByIdAsync(customerId) ?? throw new KeyNotFoundException($"Customer with ID {customerId} not found.");
 
             customer.FirstName = dto.FirstName;
             customer.LastName = dto.LastName;
@@ -79,14 +76,25 @@ namespace RestaurantReservation.Core.Services
         public async Task<List<CustomerDetailsDTO>> FindCustomersByPartySizeAsync(int minPartySize)
         {
             var dto = new PartySizeDTO { PartySize = minPartySize };
-
-            ValidationResult result = await _partySizeValidator.ValidateAsync(dto);
-            if (!result.IsValid)
-            {
-                throw new ArgumentException(string.Join("\n", result.Errors.Select(e => e.ErrorMessage)));
-            }
+            var result = await _partySizeValidator.ValidateAsync(dto);
+            ValidateResult(result);
 
             return await _customerRepo.FindCustomersByPartySizeAsync(minPartySize);
+        }
+
+        private static void ValidateResult(ValidationResult result)
+        {
+            if (!result.IsValid)
+            {
+                var errors = result.Errors.Select(e => new
+                {
+                    field = e.PropertyName,
+                    message = e.ErrorMessage
+                }).ToList();
+
+                var json = JsonSerializer.Serialize(new { errors });
+                throw new ArgumentException(json);
+            }
         }
     }
 }
