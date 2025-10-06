@@ -2,6 +2,7 @@
 using RestaurantReservation.Db.Models;
 using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Shared.DTOs.Restaurant;
+using System.Text.Json;
 
 namespace RestaurantReservation.API.Endpoints
 {
@@ -26,7 +27,7 @@ namespace RestaurantReservation.API.Endpoints
                 var restaurant = await restaurantService.GetRestaurantByIdAsync(id);
                 if (restaurant == null)
                 {
-                    return Results.NotFound();
+                    return Results.NotFound(new { error = $"Restaurant with ID {id} not found." });
                 }
                 return Results.Ok(ToDTO(restaurant));
             })
@@ -39,8 +40,16 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPost("/api/restaurants", async ([FromBody] CreateRestaurantDTO dto, [FromServices] IRestaurantService restaurantService) =>
             {
-                var restaurant = await restaurantService.AddAsync(dto);
-                return Results.Created($"/api/restaurants/{restaurant.RestaurantId}", ToDTO(restaurant));
+                try
+                {
+                    var restaurant = await restaurantService.AddAsync(dto);
+                    return Results.Created($"/api/restaurants/{restaurant.RestaurantId}", ToDTO(restaurant));
+                }
+                catch (ArgumentException ex)
+                {
+                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
+                    return Results.BadRequest(errorResponse);
+                }
             })
             .WithName("AddRestaurant")
             .WithSummary("Creates a new restaurant")
@@ -51,13 +60,20 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPut("/api/restaurants/{id:int}", async (int id, [FromBody] UpdateRestaurantDTO dto, [FromServices] IRestaurantService restaurantService) =>
             {
-                var existing = await restaurantService.GetRestaurantByIdAsync(id);
-                if (existing == null)
+                try
                 {
-                    return Results.NotFound();
+                    var restaurant = await restaurantService.UpdateAsync(id, dto);
+                    return Results.Ok(ToDTO(restaurant));
                 }
-                var restaurant = await restaurantService.UpdateAsync(id, dto);
-                return Results.Ok(ToDTO(restaurant));
+                catch (ArgumentException ex)
+                {
+                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
+                    return Results.BadRequest(errorResponse);
+                }
+                catch (KeyNotFoundException ex)
+                {
+                    return Results.NotFound(new { error = ex.Message });
+                }
             })
             .WithName("UpdateRestaurant")
             .WithSummary("Updates an existing restaurant")
@@ -69,13 +85,15 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapDelete("/api/restaurants/{id:int}", async (int id, [FromServices] IRestaurantService restaurantService) =>
             {
-                var existing = await restaurantService.GetRestaurantByIdAsync(id);
-                if (existing == null)
+                try
                 {
-                    return Results.NotFound();
+                    await restaurantService.DeleteAsync(id);
+                    return Results.NoContent();
                 }
-                await restaurantService.DeleteAsync(id);
-                return Results.NoContent();
+                catch (KeyNotFoundException ex)
+                {
+                    return Results.NotFound(new { error = ex.Message });
+                }
             })
             .WithName("DeleteRestaurant")
             .WithSummary("Deletes a restaurant by its ID")

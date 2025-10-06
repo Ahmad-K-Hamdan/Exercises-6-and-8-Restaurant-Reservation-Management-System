@@ -16,8 +16,8 @@ namespace RestaurantReservation.Core.Services
         private readonly IValidator<CreateOrderDTO> _createValidator;
         private readonly IValidator<UpdateOrderDTO> _updateValidator;
 
-        public OrderService(IOrderRepository orderRepo, 
-            IReservationRepository reservationRepo, 
+        public OrderService(IOrderRepository orderRepo,
+            IReservationRepository reservationRepo,
             IEmployeeRepository employeeRepo,
             IValidator<CreateOrderDTO> createValidator,
             IValidator<UpdateOrderDTO> updateValidator)
@@ -44,10 +44,8 @@ namespace RestaurantReservation.Core.Services
             var result = await _createValidator.ValidateAsync(dto);
             ValidateResult(result);
 
-            var reservation = await _reservationRepo.GetByIdAsync(dto.ReservationId) 
-                ?? throw new KeyNotFoundException($"Reservation with ID {dto.ReservationId} not found.");
-            var employee = await _employeeRepo.GetByIdAsync(dto.EmployeeId) 
-                ?? throw new KeyNotFoundException($"Employee with ID {dto.EmployeeId} not found.");
+            var reservation = await _reservationRepo.GetByIdAsync(dto.ReservationId) ?? throw new KeyNotFoundException($"Reservation with ID {dto.ReservationId} not found.");
+            var employee = await _employeeRepo.GetByIdAsync(dto.EmployeeId) ?? throw new KeyNotFoundException($"Employee with ID {dto.EmployeeId} not found.");
 
             var newOrder = new Order
             {
@@ -62,8 +60,7 @@ namespace RestaurantReservation.Core.Services
 
         public async Task DeleteAsync(int orderId)
         {
-            var order = await _orderRepo.GetByIdAsync(orderId) 
-                ?? throw new KeyNotFoundException($"Order with ID {orderId} not found.");
+            var order = await _orderRepo.GetByIdAsync(orderId) ?? throw new KeyNotFoundException($"Order with ID {orderId} not found.");
             await _orderRepo.DeleteAsync(order);
         }
 
@@ -72,8 +69,7 @@ namespace RestaurantReservation.Core.Services
             var result = await _updateValidator.ValidateAsync(dto);
             ValidateResult(result);
 
-            var order = await _orderRepo.GetByIdAsync(orderId) 
-                ?? throw new KeyNotFoundException($"Order with ID {orderId} not found.");
+            var order = await _orderRepo.GetByIdAsync(orderId) ?? throw new KeyNotFoundException($"Order with ID {orderId} not found.");
 
             order.ReservationId = dto.ReservationId;
             order.EmployeeId = dto.EmployeeId;
@@ -92,12 +88,12 @@ namespace RestaurantReservation.Core.Services
         {
             if (!result.IsValid)
             {
-                var errors = result.Errors.Select(e => new 
-                { 
-                    field = e.PropertyName, 
-                    message = e.ErrorMessage 
+                var errors = result.Errors.Select(e => new
+                {
+                    field = e.PropertyName,
+                    message = e.ErrorMessage
                 }).ToList();
-                
+
                 var json = JsonSerializer.Serialize(new { errors });
                 throw new ArgumentException(json);
             }

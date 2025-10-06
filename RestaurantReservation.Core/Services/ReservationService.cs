@@ -49,12 +49,9 @@ namespace RestaurantReservation.Core.Services
             var result = await _createValidator.ValidateAsync(dto);
             ValidateResult(result);
 
-            var customer = await _customerRepo.GetByIdAsync(dto.CustomerId)
-                ?? throw new KeyNotFoundException($"Customer with ID {dto.CustomerId} not found.");
-            var restaurant = await _restaurantRepo.GetByIdAsync(dto.RestaurantId)
-                ?? throw new KeyNotFoundException($"Restaurant with ID {dto.RestaurantId} not found.");
-            var table = await _tableRepo.GetByIdAsync(dto.TableId)
-                ?? throw new KeyNotFoundException($"Table with ID {dto.TableId} not found.");
+            var customer = await _customerRepo.GetByIdAsync(dto.CustomerId) ?? throw new KeyNotFoundException($"Customer with ID {dto.CustomerId} not found.");
+            var restaurant = await _restaurantRepo.GetByIdAsync(dto.RestaurantId) ?? throw new KeyNotFoundException($"Restaurant with ID {dto.RestaurantId} not found.");
+            var table = await _tableRepo.GetByIdAsync(dto.TableId) ?? throw new KeyNotFoundException($"Table with ID {dto.TableId} not found.");
 
             var newReservation = new Reservation
             {
@@ -70,8 +67,7 @@ namespace RestaurantReservation.Core.Services
 
         public async Task DeleteAsync(int reservationId)
         {
-            var reservation = await _reservationRepo.GetByIdAsync(reservationId)
-                ?? throw new KeyNotFoundException($"Reservation with ID {reservationId} not found.");
+            var reservation = await _reservationRepo.GetByIdAsync(reservationId) ?? throw new KeyNotFoundException($"Reservation with ID {reservationId} not found.");
             await _reservationRepo.DeleteAsync(reservation);
         }
 
@@ -80,8 +76,7 @@ namespace RestaurantReservation.Core.Services
             var result = await _updateValidator.ValidateAsync(dto);
             ValidateResult(result);
 
-            var reservation = await _reservationRepo.GetByIdAsync(reservationId)
-                ?? throw new KeyNotFoundException($"Reservation with ID {reservationId} not found.");
+            var reservation = await _reservationRepo.GetByIdAsync(reservationId) ?? throw new KeyNotFoundException($"Reservation with ID {reservationId} not found.");
 
             reservation.CustomerId = dto.CustomerId;
             reservation.RestaurantId = dto.RestaurantId;

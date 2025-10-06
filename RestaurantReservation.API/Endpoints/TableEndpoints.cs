@@ -2,6 +2,7 @@
 using RestaurantReservation.Db.Models;
 using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Shared.DTOs.Table;
+using System.Text.Json;
 
 namespace RestaurantReservation.API.Endpoints
 {
@@ -26,7 +27,7 @@ namespace RestaurantReservation.API.Endpoints
                 var table = await tableService.GetTableByIdAsync(id);
                 if (table == null)
                 {
-                    return Results.NotFound();
+                    return Results.NotFound(new { error = $"Table with ID {id} not found." });
                 }
                 return Results.Ok(ToDTO(table));
             })
@@ -39,25 +40,45 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPost("/api/tables", async ([FromBody] CreateTableDTO dto, [FromServices] ITableService tableService) =>
             {
-                var table = await tableService.AddAsync(dto);
-                return Results.Created($"/api/tables/{table.TableId}", ToDTO(table));
+                try
+                {
+                    var table = await tableService.AddAsync(dto);
+                    return Results.Created($"/api/tables/{table.TableId}", ToDTO(table));
+                }
+                catch (ArgumentException ex)
+                {
+                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
+                    return Results.BadRequest(errorResponse);
+                }
+                catch (KeyNotFoundException ex)
+                {
+                    return Results.NotFound(new { error = ex.Message });
+                }
             })
             .WithName("AddTable")
             .WithSummary("Creates a new table")
             .WithTags("Table")
             .Produces<TableDTO>(201)
             .Produces(400)
+            .Produces(404)
             .RequireAuthorization();
 
             app.MapPut("/api/tables/{id:int}", async (int id, [FromBody] UpdateTableDTO dto, [FromServices] ITableService tableService) =>
             {
-                var existing = await tableService.GetTableByIdAsync(id);
-                if (existing == null)
+                try
                 {
-                    return Results.NotFound();
+                    var table = await tableService.UpdateAsync(id, dto);
+                    return Results.Ok(ToDTO(table));
                 }
-                var table = await tableService.UpdateAsync(id, dto);
-                return Results.Ok(ToDTO(table));
+                catch (ArgumentException ex)
+                {
+                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
+                    return Results.BadRequest(errorResponse);
+                }
+                catch (KeyNotFoundException ex)
+                {
+                    return Results.NotFound(new { error = ex.Message });
+                }
             })
             .WithName("UpdateTable")
             .WithSummary("Updates an existing table")
@@ -69,13 +90,15 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapDelete("/api/tables/{id:int}", async (int id, [FromServices] ITableService tableService) =>
             {
-                var existing = await tableService.GetTableByIdAsync(id);
-                if (existing == null)
+                try
                 {
-                    return Results.NotFound();
+                    await tableService.DeleteAsync(id);
+                    return Results.NoContent();
                 }
-                await tableService.DeleteAsync(id);
-                return Results.NoContent();
+                catch (KeyNotFoundException ex)
+                {
+                    return Results.NotFound(new { error = ex.Message });
+                }
             })
             .WithName("DeleteTable")
             .WithSummary("Deletes a table by its ID")

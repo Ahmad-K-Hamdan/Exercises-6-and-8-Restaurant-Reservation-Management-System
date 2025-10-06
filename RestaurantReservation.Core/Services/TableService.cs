@@ -2,6 +2,9 @@
 using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Db.Repositories.Interfaces;
 using RestaurantReservation.Shared.DTOs.Table;
+using FluentValidation;
+using FluentValidation.Results;
+using System.Text.Json;
 
 namespace RestaurantReservation.Core.Services
 {
@@ -9,11 +12,18 @@ namespace RestaurantReservation.Core.Services
     {
         private readonly ITableRepository _tableRepo;
         private readonly IRestaurantRepository _restaurantRepo;
+        private readonly IValidator<CreateTableDTO> _createValidator;
+        private readonly IValidator<UpdateTableDTO> _updateValidator;
 
-        public TableService(ITableRepository tableRepo, IRestaurantRepository restaurantRepo)
+        public TableService(ITableRepository tableRepo,
+            IRestaurantRepository restaurantRepo,
+            IValidator<CreateTableDTO> createValidator,
+            IValidator<UpdateTableDTO> updateValidator)
         {
             _tableRepo = tableRepo;
             _restaurantRepo = restaurantRepo;
+            _createValidator = createValidator;
+            _updateValidator = updateValidator;
         }
 
         public async Task<List<Table>> ViewAllAsync()
@@ -28,7 +38,10 @@ namespace RestaurantReservation.Core.Services
 
         public async Task<Table> AddAsync(CreateTableDTO dto)
         {
-            var restaurant = await _restaurantRepo.GetByIdAsync(dto.RestaurantId) ?? throw new ArgumentException($"Restaurant with ID {dto.RestaurantId} not found.");
+            var result = await _createValidator.ValidateAsync(dto);
+            ValidateResult(result);
+
+            var restaurant = await _restaurantRepo.GetByIdAsync(dto.RestaurantId) ?? throw new KeyNotFoundException($"Restaurant with ID {dto.RestaurantId} not found.");
 
             var newTable = new Table
             {
@@ -41,18 +54,36 @@ namespace RestaurantReservation.Core.Services
 
         public async Task DeleteAsync(int tableId)
         {
-            var table = await _tableRepo.GetByIdAsync(tableId) ?? throw new ArgumentException($"Table with ID {tableId} not found.");
+            var table = await _tableRepo.GetByIdAsync(tableId) ?? throw new KeyNotFoundException($"Table with ID {tableId} not found.");
             await _tableRepo.DeleteAsync(table);
         }
 
         public async Task<Table> UpdateAsync(int tableId, UpdateTableDTO dto)
         {
-            var table = await _tableRepo.GetByIdAsync(tableId) ?? throw new ArgumentException($"Table with ID {tableId} not found.");
+            var result = await _updateValidator.ValidateAsync(dto);
+            ValidateResult(result);
+
+            var table = await _tableRepo.GetByIdAsync(tableId) ?? throw new KeyNotFoundException($"Table with ID {tableId} not found.");
 
             table.RestaurantId = dto.RestaurantId;
             table.Capacity = dto.Capacity;
 
             return await _tableRepo.UpdateAsync(table);
+        }
+
+        private static void ValidateResult(ValidationResult result)
+        {
+            if (!result.IsValid)
+            {
+                var errors = result.Errors.Select(e => new
+                {
+                    field = e.PropertyName,
+                    message = e.ErrorMessage
+                }).ToList();
+
+                var json = JsonSerializer.Serialize(new { errors });
+                throw new ArgumentException(json);
+            }
         }
     }
 }
