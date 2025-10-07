@@ -20,8 +20,16 @@ namespace RestaurantReservation.API.Endpoints
             })
             .WithName("GetAllReservations")
             .WithSummary("Retrieves all reservations")
+            .WithDescription("""
+                Retrieves all reservations in the system.
+
+                ### Responses
+                - **200 OK**: Returns a list of reservations.
+                - **401 Unauthorized**: If the user is not authenticated.
+                """)
             .WithTags("Reservation")
             .Produces<IEnumerable<ReservationDTO>>(200)
+            .Produces(401)
             .RequireAuthorization();
 
             app.MapGet("/api/reservations/{id:int}", async (int id, [FromServices] IReservationService reservationService) =>
@@ -35,9 +43,21 @@ namespace RestaurantReservation.API.Endpoints
             })
             .WithName("GetReservationById")
             .WithSummary("Retrieves a reservation by its ID")
+            .WithDescription("""
+                Retrieves a specific reservation by its ID.
+
+                ### Path Parameters
+                - **id** (int, required): The ID of the reservation to retrieve.
+
+                ### Responses
+                - **200 OK**: Returns the reservation details.
+                - **404 Not Found**: If the reservation does not exist.
+                - **401 Unauthorized**: If the user is not authenticated.
+                """)
             .WithTags("Reservation")
             .Produces<ReservationDTO>(200)
             .Produces(404)
+            .Produces(401)
             .RequireAuthorization();
 
             app.MapPost("/api/reservations", async ([FromBody] CreateReservationDTO dto, [FromServices] IReservationService reservationService) =>
@@ -59,10 +79,23 @@ namespace RestaurantReservation.API.Endpoints
             })
             .WithName("AddReservation")
             .WithSummary("Creates a new reservation")
+            .WithDescription("""
+                Creates a new reservation.
+
+                ### Request Body
+                - **CreateReservationDTO** (required): Object containing reservation details including CustomerId, ReservationDate, PartySize, RestaurantId, and TableId.
+
+                ### Responses
+                - **201 Created**: Returns the newly created reservation.
+                - **400 Bad Request**: If validation fails.
+                - **404 Not Found**: If a referenced customer, restaurant, or table does not exist.
+                - **401 Unauthorized**: If the user is not authenticated.
+                """)
             .WithTags("Reservation")
             .Produces<ReservationDTO>(201)
             .Produces(400)
             .Produces(404)
+            .Produces(401)
             .RequireAuthorization();
 
             app.MapPut("/api/reservations/{id:int}", async (int id, [FromBody] UpdateReservationDTO dto, [FromServices] IReservationService reservationService) =>
@@ -84,10 +117,26 @@ namespace RestaurantReservation.API.Endpoints
             })
             .WithName("UpdateReservation")
             .WithSummary("Updates an existing reservation")
+            .WithDescription("""
+                Updates an existing reservation by its ID.
+
+                ### Path Parameters
+                - **id** (int, required): The ID of the reservation to update.
+
+                ### Request Body
+                - **UpdateReservationDTO** (required): Object containing updated reservation details.
+
+                ### Responses
+                - **200 OK**: Returns the updated reservation.
+                - **400 Bad Request**: If validation fails.
+                - **404 Not Found**: If the reservation does not exist.
+                - **401 Unauthorized**: If the user is not authenticated.
+                """)
             .WithTags("Reservation")
             .Produces<ReservationDTO>(200)
             .Produces(400)
             .Produces(404)
+            .Produces(401)
             .RequireAuthorization();
 
             app.MapDelete("/api/reservations/{id:int}", async (int id, [FromServices] IReservationService reservationService) =>
@@ -104,9 +153,21 @@ namespace RestaurantReservation.API.Endpoints
             })
             .WithName("DeleteReservation")
             .WithSummary("Deletes a reservation by its ID")
+            .WithDescription("""
+                Deletes a reservation by its ID.
+
+                ### Path Parameters
+                - **id** (int, required): The ID of the reservation to delete.
+
+                ### Responses
+                - **204 No Content**: If deletion is successful.
+                - **404 Not Found**: If the reservation does not exist.
+                - **401 Unauthorized**: If the user is not authenticated.
+                """)
             .WithTags("Reservation")
             .Produces(204)
             .Produces(404)
+            .Produces(401)
             .RequireAuthorization();
 
             app.MapGet("/api/reservations/customer/{customerId}", async (int customerId, [FromServices] IReservationService reservationService, [FromServices] ICustomerService customerService) =>
@@ -122,9 +183,21 @@ namespace RestaurantReservation.API.Endpoints
             })
             .WithName("GetReservationsByCustomerId")
             .WithSummary("Retrieves all reservations for a specific customer by customer ID")
+            .WithDescription("""
+                Retrieves all reservations for a specific customer.
+
+                ### Path Parameters
+                - **customerId** (int, required): The ID of the customer.
+
+                ### Responses
+                - **200 OK**: Returns a list of reservations for the customer.
+                - **404 Not Found**: If the customer does not exist or has no reservations.
+                - **401 Unauthorized**: If the user is not authenticated.
+                """)
             .WithTags("Reservation")
             .Produces<IEnumerable<ReservationDTO>>(200)
             .Produces(404)
+            .Produces(401)
             .RequireAuthorization();
 
             app.MapGet("/api/reservations/{reservationId}/orders", async (int reservationId, [FromServices] IReservationService reservationService) =>
@@ -139,9 +212,21 @@ namespace RestaurantReservation.API.Endpoints
             })
             .WithName("GetOrdersByReservationId")
             .WithSummary("Retrieves all orders and their menu items for a specific reservation by reservation ID")
+            .WithDescription("""
+                Retrieves all orders and their associated menu items for a specific reservation.
+
+                ### Path Parameters
+                - **reservationId** (int, required): The ID of the reservation.
+
+                ### Responses
+                - **200 OK**: Returns a list of orders with menu items.
+                - **404 Not Found**: If the reservation does not exist.
+                - **401 Unauthorized**: If the user is not authenticated.
+                """)
             .WithTags("Reservation")
             .Produces<IEnumerable<OrderWithItemsDTO>>(200)
             .Produces(404)
+            .Produces(401)
             .RequireAuthorization();
 
             app.MapGet("/api/reservations/{reservationId}/menu-items", async (int reservationId, [FromServices] IReservationService reservationService) =>
@@ -156,9 +241,21 @@ namespace RestaurantReservation.API.Endpoints
             })
             .WithName("GetMenuItemsByReservationId")
             .WithSummary("Retrieves all ordered menu items for a specific reservation by reservation ID")
+            .WithDescription("""
+                Retrieves all menu items ordered for a specific reservation.
+
+                ### Path Parameters
+                - **reservationId** (int, required): The ID of the reservation.
+
+                ### Responses
+                - **200 OK**: Returns a list of ordered menu items.
+                - **404 Not Found**: If the reservation does not exist.
+                - **401 Unauthorized**: If the user is not authenticated.
+                """)
             .WithTags("Reservation")
             .Produces<IEnumerable<OrderedMenuItemDTO>>(200)
             .Produces(404)
+            .Produces(401)
             .RequireAuthorization();
         }
 
