@@ -5,12 +5,12 @@ namespace RestaurantReservation.Core.Services.Interfaces
 {
     public interface IEmployeeService
     {
-        Task<List<Employee>> ViewAllAsync();
-        Task<Employee?> GetEmployeeByIdAsync(int employeeId);
-        Task<Employee> AddAsync(CreateEmployeeDTO dto);
+        Task<EmployeeDTO> AddAsync(CreateEmployeeDTO dto);
         Task DeleteAsync(int employeeId);
-        Task<Employee> UpdateAsync(int employeeId, UpdateEmployeeDTO dto);
-        Task<List<Employee>> ListManagersAsync();
+        Task<EmployeeDTO> GetEmployeeByIdAsync(int employeeId);
         Task<List<EmployeeDetailsDTO>> GetEmployeeDetailsAsync();
+        Task<List<EmployeeDTO>> ListManagersAsync();
+        Task<EmployeeDTO> UpdateAsync(int employeeId, UpdateEmployeeDTO dto);
+        Task<List<EmployeeDTO>> ViewAllAsync();
     }
 }

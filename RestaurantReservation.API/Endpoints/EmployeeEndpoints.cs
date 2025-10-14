@@ -1,7 +1,5 @@
-﻿using System.Text.Json;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using RestaurantReservation.Core.Services.Interfaces;
-using RestaurantReservation.Db.Models;
 using RestaurantReservation.Shared.DTOs.Employee;
 
 namespace RestaurantReservation.API.Endpoints
@@ -12,9 +10,7 @@ namespace RestaurantReservation.API.Endpoints
         {
             app.MapGet("/api/employees", async ([FromServices] IEmployeeService employeeService) =>
             {
-                var employees = await employeeService.ViewAllAsync();
-                var employeeDTOs = employees.Select(ToDTO).ToList();
-                return Results.Ok(employeeDTOs);
+                return Results.Ok(await employeeService.ViewAllAsync());
             })
             .WithName("GetAllEmployees")
             .WithSummary("Retrieves all employees")
@@ -32,12 +28,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapGet("/api/employees/{id:int}", async (int id, [FromServices] IEmployeeService employeeService) =>
             {
-                var employee = await employeeService.GetEmployeeByIdAsync(id);
-                if (employee == null)
-                {
-                    return Results.NotFound(new { error = $"Employee with ID {id} not found." });
-                }
-                return Results.Ok(ToDTO(employee));
+                return Results.Ok(await employeeService.GetEmployeeByIdAsync(id));
             })
             .WithName("GetEmployeeById")
             .WithSummary("Retrieves an employee by its ID")
@@ -60,20 +51,8 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPost("/api/employees", async ([FromBody] CreateEmployeeDTO dto, [FromServices] IEmployeeService employeeService) =>
             {
-                try
-                {
-                    var employee = await employeeService.AddAsync(dto);
-                    return Results.Created($"/api/employees/{employee.EmployeeId}", ToDTO(employee));
-                }
-                catch (ArgumentException ex)
-                {
-                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
-                    return Results.BadRequest(errorResponse);
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                var employee = await employeeService.AddAsync(dto);
+                return Results.Created($"/api/employees/{employee.EmployeeId}", employee);
             })
             .WithName("AddEmployee")
             .WithSummary("Creates a new employee")
@@ -98,20 +77,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPut("/api/employees/{id:int}", async (int id, [FromBody] UpdateEmployeeDTO dto, [FromServices] IEmployeeService employeeService) =>
             {
-                try
-                {
-                    var employee = await employeeService.UpdateAsync(id, dto);
-                    return Results.Ok(ToDTO(employee));
-                }
-                catch (ArgumentException ex)
-                {
-                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
-                    return Results.BadRequest(errorResponse);
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                return Results.Ok(await employeeService.UpdateAsync(id, dto));
             })
             .WithName("UpdateEmployee")
             .WithSummary("Updates an existing employee")
@@ -139,15 +105,8 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapDelete("/api/employees/{id:int}", async (int id, [FromServices] IEmployeeService employeeService) =>
             {
-                try
-                {
-                    await employeeService.DeleteAsync(id);
-                    return Results.NoContent();
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                await employeeService.DeleteAsync(id);
+                return Results.NoContent();
             })
             .WithName("DeleteEmployee")
             .WithSummary("Deletes an employee by its ID")
@@ -170,13 +129,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapGet("/api/employees/managers", async ([FromServices] IEmployeeService employeeService) =>
             {
-                var managers = await employeeService.ListManagersAsync();
-                if (managers == null || !managers.Any())
-                {
-                    return Results.NotFound(new { error = "No managers found." });
-                }
-                var managerDTOs = managers.Select(ToDTO).ToList();
-                return Results.Ok(managerDTOs);
+                return Results.Ok(await employeeService.ListManagersAsync());
             })
             .WithName("GetAllManagers")
             .WithSummary("Retrieves all employees with the position of 'Manager'")
@@ -185,24 +138,22 @@ namespace RestaurantReservation.API.Endpoints
 
                 ### Responses
                 - **200 OK**: Returns a list of employees with the position of 'Manager'.
-                - **404 Not Found**: If no managers exist.
                 - **401 Unauthorized**: If the user is not authenticated.
                 """)
             .WithTags("Employee")
             .Produces<IEnumerable<EmployeeDTO>>(200)
-            .Produces(404)
             .Produces(401)
             .RequireAuthorization();
 
             app.MapGet("/api/employees/{employeeId}/average-order-amount", async (int employeeId, [FromServices] IEmployeeService employeeService, [FromServices] IOrderService orderService) =>
             {
                 var employee = await employeeService.GetEmployeeByIdAsync(employeeId);
-                if (employee == null)
-                {
-                    return Results.NotFound(new { error = $"Employee with ID {employeeId} not found." });
-                }
-                var average = await orderService.CalculateAverageOrderAmountByEmployeeAsync(employeeId);
-                return Results.Ok(new { employeeId, averageOrderAmount = average });
+                return Results.Ok(
+                    new
+                    {
+                        employeeId,
+                        averageOrderAmount = await orderService.CalculateAverageOrderAmountByEmployeeAsync(employeeId)
+                    });
             })
             .WithName("GetAverageOrderAmountByEmployee")
             .WithSummary("Calculate average order amount for a specific employee")
@@ -222,18 +173,6 @@ namespace RestaurantReservation.API.Endpoints
             .Produces(404)
             .Produces(401)
             .RequireAuthorization();
-        }
-
-        private static EmployeeDTO ToDTO(Employee employee)
-        {
-            return new EmployeeDTO(
-                employee.EmployeeId,
-                employee.FirstName,
-                employee.LastName,
-                employee.Position,
-                employee.RestaurantId,
-                employee.Restaurant?.Name ?? ""
-            );
         }
     }
 }

@@ -20,7 +20,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RestaurantReservation.Core\RestaurantReservation.Core.csproj" />
-    <ProjectReference Include="..\RestaurantReservation.Services\RestaurantReservation.Services.csproj" />
     <ProjectReference Include="..\RestaurantReservation.Shared\RestaurantReservation.Shared.csproj" />
   </ItemGroup>
 

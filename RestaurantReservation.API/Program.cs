@@ -1,11 +1,11 @@
-using System.Text;
 using FluentValidation;
-using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RestaurantReservation.API.Auth;
 using RestaurantReservation.API.Endpoints;
+using RestaurantReservation.Core.Exceptions;
 using RestaurantReservation.Core.Services;
 using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Core.Validators.CustomerValidators;
@@ -19,8 +19,8 @@ using RestaurantReservation.Core.Validators.TableValidators;
 using RestaurantReservation.Db;
 using RestaurantReservation.Db.Repositories;
 using RestaurantReservation.Db.Repositories.Interfaces;
-using RestaurantReservation.Shared.DTOs.Customer;
-using RestaurantReservation.Shared.DTOs.Employee;
+using System.Text;
+using System.Text.Json;
 
 namespace RestaurantReservation.API
 {
@@ -109,6 +109,54 @@ namespace RestaurantReservation.API
                 app.UseSwaggerUI();
             }
 
+            // Add exception handling
+            app.UseExceptionHandler(appError =>
+            {
+                appError.Run(async context =>
+                {
+                    context.Response.ContentType = "application/json";
+
+                    // Get the exception
+                    var exceptionFeature = context.Features.Get<IExceptionHandlerFeature>();
+                    if (exceptionFeature == null)
+                    {
+                        return;
+                    }
+
+                    var exception = exceptionFeature.Error;
+
+                    // Response object
+                    object response;
+
+                    switch (exception)
+                    {
+                        case NotFoundException notFound:
+                            context.Response.StatusCode = StatusCodes.Status404NotFound;
+                            response = new { error = notFound.Message };
+                            break;
+
+                        case ValidationException validation:
+                            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                            response = new
+                            {
+                                errors = validation.Errors.Select(e => new
+                                {
+                                    field = e.PropertyName,
+                                    message = e.ErrorMessage
+                                })
+                            };
+                            break;
+
+                        default:
+                            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                            response = new { error = exception.Message };
+                            break;
+                    }
+
+                    await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+                });
+            });
+
             // Redirect HTTP requests to HTTPS for security
             app.UseHttpsRedirection();
             app.UseAuthentication();
@@ -116,7 +164,7 @@ namespace RestaurantReservation.API
 
             app.MapPost("/api/auth/token", (TokenRequest request, JwtTokenGenerator jwtGen) =>
             {
-                var token = jwtGen.GenerateToken(request.Username, request.Email);
+                var token = jwtGen.GenerateToken(request);
                 return Results.Ok(new TokenResponse(token, DateTime.UtcNow.AddHours(1)));
             })
             .WithName("GenerateToken")

@@ -3,8 +3,7 @@ using RestaurantReservation.Db.Repositories.Interfaces;
 using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Shared.DTOs.Customer;
 using FluentValidation;
-using FluentValidation.Results;
-using System.Text.Json;
+using RestaurantReservation.Core.Exceptions;
 
 namespace RestaurantReservation.Core.Services
 {
@@ -26,20 +25,25 @@ namespace RestaurantReservation.Core.Services
             _partySizeValidator = partySizeValidator;
         }
 
-        public async Task<List<Customer>> ViewAllAsync()
+        public async Task<List<CustomerDTO>> ViewAllAsync()
         {
-            return await _customerRepo.GetAllAsync();
+            var customers = await _customerRepo.GetAllAsync();
+            return customers.Select(ToDTO).ToList();
         }
 
-        public async Task<Customer?> GetCustomerByIdAsync(int customerId)
+        public async Task<CustomerDTO> GetCustomerByIdAsync(int customerId)
         {
-            return await _customerRepo.GetByIdAsync(customerId);
+            var customer = await _customerRepo.GetByIdAsync(customerId);
+            if (customer == null)
+            {
+                throw new NotFoundException($"Customer with ID {customerId} not found.");
+            }
+            return ToDTO(customer);
         }
 
-        public async Task<Customer> AddAsync(CreateCustomerDTO dto)
+        public async Task<CustomerDTO> AddAsync(CreateCustomerDTO dto)
         {
-            var result = await _createValidator.ValidateAsync(dto);
-            ValidateResult(result);
+            await _createValidator.ValidateAndThrowAsync(dto);
 
             var newCustomer = new Customer
             {
@@ -49,52 +53,62 @@ namespace RestaurantReservation.Core.Services
                 PhoneNumber = dto.PhoneNumber
             };
 
-            return await _customerRepo.AddAsync(newCustomer);
+            var customer = await _customerRepo.AddAsync(newCustomer);
+            return ToDTO(customer);
         }
 
         public async Task DeleteAsync(int customerId)
         {
-            var customer = await _customerRepo.GetByIdAsync(customerId) ?? throw new KeyNotFoundException($"Customer with ID {customerId} not found.");
+            var customer = await _customerRepo.GetByIdAsync(customerId);
+            if (customer == null)
+            {
+                throw new NotFoundException($"Customer with ID {customerId} not found.");
+            }
             await _customerRepo.DeleteAsync(customer);
         }
 
-        public async Task<Customer> UpdateAsync(int customerId, UpdateCustomerDTO dto)
+        public async Task<CustomerDTO> UpdateAsync(int customerId, UpdateCustomerDTO dto)
         {
-            var result = await _updateValidator.ValidateAsync(dto);
-            ValidateResult(result);
+            await _updateValidator.ValidateAndThrowAsync(dto);
 
-            var customer = await _customerRepo.GetByIdAsync(customerId) ?? throw new KeyNotFoundException($"Customer with ID {customerId} not found.");
+            var customer = await _customerRepo.GetByIdAsync(customerId);
+            if (customer == null)
+            {
+                throw new NotFoundException($"Customer with ID {customerId} not found.");
+            }
 
             customer.FirstName = dto.FirstName;
             customer.LastName = dto.LastName;
             customer.Email = dto.Email;
             customer.PhoneNumber = dto.PhoneNumber;
 
-            return await _customerRepo.UpdateAsync(customer);
+            var updatedCustomer = await _customerRepo.UpdateAsync(customer);
+            return ToDTO(updatedCustomer);
         }
 
         public async Task<List<CustomerDetailsDTO>> FindCustomersByPartySizeAsync(int minPartySize)
         {
             var dto = new PartySizeDTO { PartySize = minPartySize };
-            var result = await _partySizeValidator.ValidateAsync(dto);
-            ValidateResult(result);
+            await _partySizeValidator.ValidateAndThrowAsync(dto);
 
-            return await _customerRepo.FindCustomersByPartySizeAsync(minPartySize);
+            var customers = await _customerRepo.FindCustomersByPartySizeAsync(minPartySize);
+            if (customers == null || !customers.Any())
+            {
+                throw new NotFoundException($"No customers found with party size >= {minPartySize}.");
+            }
+
+            return customers;
         }
 
-        private static void ValidateResult(ValidationResult result)
+        private static CustomerDTO ToDTO(Customer customer)
         {
-            if (!result.IsValid)
-            {
-                var errors = result.Errors.Select(e => new
-                {
-                    field = e.PropertyName,
-                    message = e.ErrorMessage
-                }).ToList();
-
-                var json = JsonSerializer.Serialize(new { errors });
-                throw new ArgumentException(json);
-            }
+            return new CustomerDTO(
+                customer.CustomerId,
+                customer.FirstName,
+                customer.LastName,
+                customer.Email,
+                customer.PhoneNumber
+            );
         }
     }
 }

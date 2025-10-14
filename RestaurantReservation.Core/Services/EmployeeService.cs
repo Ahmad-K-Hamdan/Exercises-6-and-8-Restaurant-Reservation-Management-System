@@ -3,8 +3,7 @@ using RestaurantReservation.Db.Repositories.Interfaces;
 using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Shared.DTOs.Employee;
 using FluentValidation;
-using FluentValidation.Results;
-using System.Text.Json;
+using RestaurantReservation.Core.Exceptions;
 
 namespace RestaurantReservation.Core.Services
 {
@@ -26,22 +25,31 @@ namespace RestaurantReservation.Core.Services
             _updateValidator = updateValidator;
         }
 
-        public async Task<List<Employee>> ViewAllAsync()
+        public async Task<List<EmployeeDTO>> ViewAllAsync()
         {
-            return await _employeeRepo.GetAllAsync();
+            var employees = await _employeeRepo.GetAllAsync();
+            return employees.Select(ToDTO).ToList();
         }
 
-        public async Task<Employee?> GetEmployeeByIdAsync(int employeeId)
+        public async Task<EmployeeDTO> GetEmployeeByIdAsync(int employeeId)
         {
-            return await _employeeRepo.GetByIdAsync(employeeId);
+            var employee = await _employeeRepo.GetByIdAsync(employeeId);
+            if (employee == null)
+            {
+                throw new NotFoundException($"Employee with ID {employeeId} not found.");
+            }
+            return ToDTO(employee);
         }
 
-        public async Task<Employee> AddAsync(CreateEmployeeDTO dto)
+        public async Task<EmployeeDTO> AddAsync(CreateEmployeeDTO dto)
         {
-            var result = await _createValidator.ValidateAsync(dto);
-            ValidateResult(result);
+            await _createValidator.ValidateAndThrowAsync(dto);
 
-            var restaurant = await _restaurantRepo.GetByIdAsync(dto.RestaurantId) ?? throw new KeyNotFoundException($"Restaurant with ID {dto.RestaurantId} not found.");
+            var restaurant = await _restaurantRepo.GetByIdAsync(dto.RestaurantId);
+            if (restaurant == null)
+            {
+                throw new NotFoundException($"Restaurant with ID {dto.RestaurantId} not found.");
+            }
 
             var newEmployee = new Employee
             {
@@ -51,32 +59,49 @@ namespace RestaurantReservation.Core.Services
                 Position = dto.Position
             };
 
-            return await _employeeRepo.AddAsync(newEmployee);
+            var employee = await _employeeRepo.AddAsync(newEmployee);
+            return ToDTO(employee);
         }
 
         public async Task DeleteAsync(int employeeId)
         {
-            var employee = await _employeeRepo.GetByIdAsync(employeeId) ?? throw new KeyNotFoundException($"Employee with ID {employeeId} not found.");
+            var employee = await _employeeRepo.GetByIdAsync(employeeId);
+            if (employee == null)
+            {
+                throw new NotFoundException($"Employee with ID {employeeId} not found.");
+            }
             await _employeeRepo.DeleteAsync(employee);
         }
 
-        public async Task<Employee> UpdateAsync(int employeeId, UpdateEmployeeDTO dto)
+        public async Task<EmployeeDTO> UpdateAsync(int employeeId, UpdateEmployeeDTO dto)
         {
-            var result = await _updateValidator.ValidateAsync(dto);
-            ValidateResult(result);
+            await _updateValidator.ValidateAndThrowAsync(dto);
 
-            var employee = await _employeeRepo.GetByIdAsync(employeeId) ?? throw new KeyNotFoundException($"Employee with ID {employeeId} not found.");
+            var employee = await _employeeRepo.GetByIdAsync(employeeId);
+            if (employee == null)
+            {
+                throw new NotFoundException($"Employee with ID {employeeId} not found.");
+            }
+
+            var restaurant = await _restaurantRepo.GetByIdAsync(dto.RestaurantId);
+            if (restaurant == null)
+            {
+                throw new NotFoundException($"Restaurant with ID {dto.RestaurantId} not found.");
+            }
 
             employee.FirstName = dto.FirstName;
             employee.LastName = dto.LastName;
             employee.Position = dto.Position;
+            employee.Restaurant = restaurant;
 
-            return await _employeeRepo.UpdateAsync(employee);
+            var updatedEmployee = await _employeeRepo.UpdateAsync(employee);
+            return ToDTO(updatedEmployee);
         }
 
-        public async Task<List<Employee>> ListManagersAsync()
+        public async Task<List<EmployeeDTO>> ListManagersAsync()
         {
-            return await _employeeRepo.GetManagersAsync();
+            var managers = await _employeeRepo.GetManagersAsync();
+            return managers.Select(ToDTO).ToList();
         }
 
         public async Task<List<EmployeeDetailsDTO>> GetEmployeeDetailsAsync()
@@ -84,19 +109,16 @@ namespace RestaurantReservation.Core.Services
             return await _employeeRepo.GetEmployeeDetailsAsync();
         }
 
-        private static void ValidateResult(ValidationResult result)
+        private static EmployeeDTO ToDTO(Employee employee)
         {
-            if (!result.IsValid)
-            {
-                var errors = result.Errors.Select(e => new
-                {
-                    field = e.PropertyName,
-                    message = e.ErrorMessage
-                }).ToList();
-
-                var json = JsonSerializer.Serialize(new { errors });
-                throw new ArgumentException(json);
-            }
+            return new EmployeeDTO(
+                employee.EmployeeId,
+                employee.FirstName,
+                employee.LastName,
+                employee.Position,
+                employee.RestaurantId,
+                employee.Restaurant?.Name ?? ""
+            );
         }
     }
 }

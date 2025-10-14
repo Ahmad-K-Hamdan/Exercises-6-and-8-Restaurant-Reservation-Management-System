@@ -1,7 +1,5 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using RestaurantReservation.Core.Services.Interfaces;
-using RestaurantReservation.Db.Models;
 using RestaurantReservation.Shared.DTOs.Customer;
 
 namespace RestaurantReservation.API.Endpoints
@@ -12,9 +10,7 @@ namespace RestaurantReservation.API.Endpoints
         {
             app.MapGet("/api/customers", async ([FromServices] ICustomerService customerService) =>
             {
-                var customers = await customerService.ViewAllAsync();
-                var customerDTOs = customers.Select(ToDTO).ToList();
-                return Results.Ok(customerDTOs);
+                return Results.Ok(await customerService.ViewAllAsync());
             })
             .WithName("GetAllCustomers")
             .WithSummary("Retrieves all customers")
@@ -32,12 +28,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapGet("/api/customers/{id:int}", async (int id, [FromServices] ICustomerService customerService) =>
             {
-                var customer = await customerService.GetCustomerByIdAsync(id);
-                if (customer == null)
-                {
-                    return Results.NotFound(new { error = $"Customer with ID {id} not found." });
-                }
-                return Results.Ok(ToDTO(customer));
+                return Results.Ok(await customerService.GetCustomerByIdAsync(id));
             })
             .WithName("GetCustomerById")
             .WithSummary("Retrieves a customer by its ID")
@@ -60,16 +51,8 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPost("/api/customers", async ([FromBody] CreateCustomerDTO dto, [FromServices] ICustomerService customerService) =>
             {
-                try
-                {
-                    var customer = await customerService.AddAsync(dto);
-                    return Results.Created($"/api/customers/{customer.CustomerId}", ToDTO(customer));
-                }
-                catch (ArgumentException ex)
-                {
-                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
-                    return Results.BadRequest(errorResponse);
-                }
+                var customer = await customerService.AddAsync(dto);
+                return Results.Created($"/api/customers/{customer.CustomerId}", customer);
             })
             .WithName("AddCustomer")
             .WithSummary("Creates a new customer")
@@ -95,20 +78,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPut("/api/customers/{id:int}", async (int id, [FromBody] UpdateCustomerDTO dto, [FromServices] ICustomerService customerService) =>
             {
-                try
-                {
-                    var customer = await customerService.UpdateAsync(id, dto);
-                    return Results.Ok(ToDTO(customer));
-                }
-                catch (ArgumentException ex)
-                {
-                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
-                    return Results.BadRequest(errorResponse);
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                return Results.Ok(await customerService.UpdateAsync(id, dto));
             })
             .WithName("UpdateCustomer")
             .WithSummary("Updates an existing customer")
@@ -139,15 +109,8 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapDelete("/api/customers/{id:int}", async (int id, [FromServices] ICustomerService customerService) =>
             {
-                try
-                {
-                    await customerService.DeleteAsync(id);
-                    return Results.NoContent();
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                await customerService.DeleteAsync(id);
+                return Results.NoContent();
             })
             .WithName("DeleteCustomer")
             .WithSummary("Deletes a customer by its ID")
@@ -170,20 +133,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapGet("/api/customers/party-size", async ([AsParameters] PartySizeDTO dto, [FromServices] ICustomerService customerService) =>
             {
-                try
-                {
-                    var customers = await customerService.FindCustomersByPartySizeAsync(dto.PartySize);
-                    if (customers == null || !customers.Any())
-                    {
-                        return Results.NotFound(new { error = $"No customers found with party size >= {dto.PartySize}." });
-                    }
-                    return Results.Ok(customers);
-                }
-                catch (ArgumentException ex)
-                {
-                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
-                    return Results.BadRequest(errorResponse);
-                }
+                return Results.Ok(await customerService.FindCustomersByPartySizeAsync(dto.PartySize));
             })
             .WithName("FindCustomersByPartySize")
             .WithSummary("Finds customers who have made reservations with a party size greater than the specified minimum")
@@ -205,17 +155,6 @@ namespace RestaurantReservation.API.Endpoints
             .Produces(404)
             .Produces(401)
             .RequireAuthorization();
-        }
-
-        private static CustomerDTO ToDTO(Customer customer)
-        {
-            return new CustomerDTO(
-                customer.CustomerId,
-                customer.FirstName,
-                customer.LastName,
-                customer.Email,
-                customer.PhoneNumber
-            );
         }
     }
 }

@@ -14,15 +14,15 @@ namespace RestaurantReservation.API.Auth
             _config = config;
         }
 
-        public string GenerateToken(string username, string email)
+        public string GenerateToken(TokenRequest tokenRequest)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {
-                new Claim(ClaimTypes.Name, username),
-                new Claim(ClaimTypes.Email, email)
+                new Claim(ClaimTypes.Name, tokenRequest.Username),
+                new Claim(ClaimTypes.Email, tokenRequest.Email)
             };
 
             var token = new JwtSecurityToken(
