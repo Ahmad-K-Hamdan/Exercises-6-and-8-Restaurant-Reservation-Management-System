@@ -1,10 +1,9 @@
-﻿using RestaurantReservation.Core.Services.Interfaces;
+﻿using FluentValidation;
+using RestaurantReservation.Core.Exceptions;
+using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Db.Models;
 using RestaurantReservation.Db.Repositories.Interfaces;
 using RestaurantReservation.Shared.DTOs.MenuItem;
-using FluentValidation;
-using FluentValidation.Results;
-using System.Text.Json;
 
 namespace RestaurantReservation.Core.Services
 {
@@ -26,22 +25,31 @@ namespace RestaurantReservation.Core.Services
             _updateValidator = updateValidator;
         }
 
-        public async Task<List<MenuItem>> ViewAllAsync()
+        public async Task<List<MenuItemDTO>> ViewAllAsync()
         {
-            return await _menuItemRepo.GetAllAsync();
+            var menuItems = await _menuItemRepo.GetAllAsync();
+            return menuItems.Select(ToDTO).ToList();
         }
 
-        public async Task<MenuItem?> GetMenuItemByIdAsync(int menuItemId)
+        public async Task<MenuItemDTO> GetMenuItemByIdAsync(int menuItemId)
         {
-            return await _menuItemRepo.GetByIdAsync(menuItemId);
+            var menuItem = await _menuItemRepo.GetByIdAsync(menuItemId);
+            if (menuItem == null)
+            {
+                throw new NotFoundException($"Menu item with ID {menuItemId} not found.");
+            }
+            return ToDTO(menuItem);
         }
 
-        public async Task<MenuItem> AddAsync(CreateMenuItemDTO dto)
+        public async Task<MenuItemDTO> AddAsync(CreateMenuItemDTO dto)
         {
-            var result = await _createValidator.ValidateAsync(dto);
-            ValidateResult(result);
+            await _createValidator.ValidateAndThrowAsync(dto);
 
-            var restaurant = await _restaurantRepo.GetByIdAsync(dto.RestaurantId) ?? throw new KeyNotFoundException($"Restaurant with ID {dto.RestaurantId} not found.");
+            var restaurant = await _restaurantRepo.GetByIdAsync(dto.RestaurantId);
+            if (restaurant == null)
+            {
+                throw new NotFoundException($"Restaurant with ID {dto.RestaurantId} not found.");
+            }
 
             var newMenuItem = new MenuItem
             {
@@ -51,42 +59,55 @@ namespace RestaurantReservation.Core.Services
                 Price = dto.Price
             };
 
-            return await _menuItemRepo.AddAsync(newMenuItem);
+            var menuItem = await _menuItemRepo.AddAsync(newMenuItem);
+            return ToDTO(menuItem);
         }
 
         public async Task DeleteAsync(int menuItemId)
         {
-            var menuItem = await _menuItemRepo.GetByIdAsync(menuItemId) ?? throw new KeyNotFoundException($"Menu item with ID {menuItemId} not found.");
+            var menuItem = await _menuItemRepo.GetByIdAsync(menuItemId);
+            if (menuItem == null)
+            {
+                throw new NotFoundException($"Menu item with ID {menuItemId} not found.");
+            }
             await _menuItemRepo.DeleteAsync(menuItem);
         }
 
-        public async Task<MenuItem> UpdateAsync(int menuItemId, UpdateMenuItemDTO dto)
+        public async Task<MenuItemDTO> UpdateAsync(int menuItemId, UpdateMenuItemDTO dto)
         {
-            var result = await _updateValidator.ValidateAsync(dto);
-            ValidateResult(result);
+            await _updateValidator.ValidateAndThrowAsync(dto);
 
-            var menuItem = await _menuItemRepo.GetByIdAsync(menuItemId) ?? throw new KeyNotFoundException($"Menu item with ID {menuItemId} not found.");
+            var menuItem = await _menuItemRepo.GetByIdAsync(menuItemId);
+            if (menuItem == null)
+            {
+                throw new NotFoundException($"Menu item with ID {menuItemId} not found.");
+            }
+
+            var restaurant = await _restaurantRepo.GetByIdAsync(dto.RestaurantId);
+            if (restaurant == null)
+            {
+                throw new NotFoundException($"Restaurant with ID {dto.RestaurantId} not found.");
+            }
 
             menuItem.Name = dto.Name;
             menuItem.Description = dto.Description;
             menuItem.Price = dto.Price;
+            menuItem.Restaurant = restaurant;
 
-            return await _menuItemRepo.UpdateAsync(menuItem);
+            var updatedMenuItem = await _menuItemRepo.UpdateAsync(menuItem);
+            return ToDTO(updatedMenuItem);
         }
 
-        private static void ValidateResult(ValidationResult result)
+        private static MenuItemDTO ToDTO(MenuItem menuItem)
         {
-            if (!result.IsValid)
-            {
-                var errors = result.Errors.Select(e => new
-                {
-                    field = e.PropertyName,
-                    message = e.ErrorMessage
-                }).ToList();
-
-                var json = JsonSerializer.Serialize(new { errors });
-                throw new ArgumentException(json);
-            }
+            return new MenuItemDTO(
+                menuItem.ItemId,
+                menuItem.Name,
+                menuItem.Description,
+                menuItem.Price,
+                menuItem.RestaurantId,
+                menuItem.Restaurant?.Name ?? ""
+            );
         }
     }
 }

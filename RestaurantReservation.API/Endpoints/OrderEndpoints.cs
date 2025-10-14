@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using RestaurantReservation.Db.Models;
 using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Shared.DTOs.Order;
-using System.Text.Json;
 
 namespace RestaurantReservation.API.Endpoints
 {
@@ -12,9 +10,7 @@ namespace RestaurantReservation.API.Endpoints
         {
             app.MapGet("/api/orders", async ([FromServices] IOrderService orderService) =>
             {
-                var orders = await orderService.ViewAllAsync();
-                var orderDTOs = orders.Select(ToDTO).ToList();
-                return Results.Ok(orderDTOs);
+                return Results.Ok(await orderService.ViewAllAsync());
             })
             .WithName("GetAllOrders")
             .WithSummary("Retrieves all orders")
@@ -32,12 +28,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapGet("/api/orders/{id:int}", async (int id, [FromServices] IOrderService orderService) =>
             {
-                var order = await orderService.GetOrderByIdAsync(id);
-                if (order == null)
-                {
-                    return Results.NotFound(new { error = $"Order with ID {id} not found." });
-                }
-                return Results.Ok(ToDTO(order));
+                return Results.Ok(await orderService.GetOrderByIdAsync(id));
             })
             .WithName("GetOrderById")
             .WithSummary("Retrieves an order by its ID")
@@ -60,20 +51,8 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPost("/api/orders", async ([FromBody] CreateOrderDTO dto, [FromServices] IOrderService orderService) =>
             {
-                try
-                {
-                    var order = await orderService.AddAsync(dto);
-                    return Results.Created($"/api/orders/{order.OrderId}", ToDTO(order));
-                }
-                catch (ArgumentException ex)
-                {
-                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
-                    return Results.BadRequest(errorResponse);
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                var order = await orderService.AddAsync(dto);
+                return Results.Created($"/api/orders/{order.OrderId}", order);
             })
             .WithName("AddOrder")
             .WithSummary("Creates a new order")
@@ -99,20 +78,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPut("/api/orders/{id:int}", async (int id, [FromBody] UpdateOrderDTO dto, [FromServices] IOrderService orderService) =>
             {
-                try
-                {
-                    var order = await orderService.UpdateAsync(id, dto);
-                    return Results.Ok(ToDTO(order));
-                }
-                catch (ArgumentException ex)
-                {
-                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
-                    return Results.BadRequest(errorResponse);
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                return Results.Ok(await orderService.UpdateAsync(id, dto));
             })
             .WithName("UpdateOrder")
             .WithSummary("Updates an existing order")
@@ -140,15 +106,8 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapDelete("/api/orders/{id:int}", async (int id, [FromServices] IOrderService orderService) =>
             {
-                try
-                {
-                    await orderService.DeleteAsync(id);
-                    return Results.NoContent();
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                await orderService.DeleteAsync(id);
+                return Results.NoContent();
             })
             .WithName("DeleteOrder")
             .WithSummary("Deletes an order by its ID")
@@ -168,18 +127,6 @@ namespace RestaurantReservation.API.Endpoints
             .Produces(404)
             .Produces(401)
             .RequireAuthorization();
-        }
-
-        private static OrderDTO ToDTO(Order order)
-        {
-            return new OrderDTO(
-                order.OrderId,
-                order.OrderDate,
-                order.TotalAmount,
-                order.ReservationId,
-                order.EmployeeId,
-                order.Employee != null ? $"{order.Employee.FirstName} {order.Employee.LastName}" : ""
-            );
         }
     }
 }

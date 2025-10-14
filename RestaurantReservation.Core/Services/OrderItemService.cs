@@ -1,10 +1,9 @@
-﻿using RestaurantReservation.Core.Services.Interfaces;
+﻿using FluentValidation;
+using RestaurantReservation.Core.Exceptions;
+using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Db.Models;
 using RestaurantReservation.Db.Repositories.Interfaces;
 using RestaurantReservation.Shared.DTOs.OrderItem;
-using FluentValidation;
-using FluentValidation.Results;
-using System.Text.Json;
 
 namespace RestaurantReservation.Core.Services
 {
@@ -29,23 +28,37 @@ namespace RestaurantReservation.Core.Services
             _updateValidator = updateValidator;
         }
 
-        public async Task<List<OrderItem>> ViewAllAsync()
+        public async Task<List<OrderItemDTO>> ViewAllAsync()
         {
-            return await _orderItemRepo.GetAllAsync();
+            var orderItems = await _orderItemRepo.GetAllAsync();
+            return orderItems.Select(ToDTO).ToList();
         }
 
-        public async Task<OrderItem?> GetOrderItemByIdAsync(int orderItemId)
+        public async Task<OrderItemDTO> GetOrderItemByIdAsync(int orderItemId)
         {
-            return await _orderItemRepo.GetByIdAsync(orderItemId);
+            var orderItem = await _orderItemRepo.GetByIdAsync(orderItemId);
+            if (orderItem == null)
+            {
+                throw new NotFoundException($"Order item with ID {orderItemId} not found.");
+            }
+            return ToDTO(orderItem);
         }
 
-        public async Task<OrderItem> AddAsync(CreateOrderItemDTO dto)
+        public async Task<OrderItemDTO> AddAsync(CreateOrderItemDTO dto)
         {
-            var result = await _createValidator.ValidateAsync(dto);
-            ValidateResult(result);
+            await _createValidator.ValidateAndThrowAsync(dto);
 
-            var order = await _orderRepo.GetByIdAsync(dto.OrderId) ?? throw new KeyNotFoundException($"Order with ID {dto.OrderId} not found.");
-            var menuItem = await _menuItemRepo.GetByIdAsync(dto.ItemId) ?? throw new KeyNotFoundException($"Menu item with ID {dto.ItemId} not found.");
+            var order = await _orderRepo.GetByIdAsync(dto.OrderId);
+            if (order == null)
+            {
+                throw new NotFoundException($"Order with ID {dto.OrderId} not found.");
+            }
+
+            var menuItem = await _menuItemRepo.GetByIdAsync(dto.ItemId);
+            if (menuItem == null)
+            {
+                throw new NotFoundException($"Menu item with ID {dto.ItemId} not found.");
+            }
 
             var newOrderItem = new OrderItem
             {
@@ -54,42 +67,59 @@ namespace RestaurantReservation.Core.Services
                 Quantity = dto.Quantity
             };
 
-            return await _orderItemRepo.AddAsync(newOrderItem);
+            var orderItem = await _orderItemRepo.AddAsync(newOrderItem);
+            return ToDTO(orderItem);
         }
 
         public async Task DeleteAsync(int orderItemId)
         {
-            var orderItem = await _orderItemRepo.GetByIdAsync(orderItemId) ?? throw new KeyNotFoundException($"Order item with ID {orderItemId} not found.");
+            var orderItem = await _orderItemRepo.GetByIdAsync(orderItemId);
+            if (orderItem == null)
+            {
+                throw new NotFoundException($"Order item with ID {orderItemId} not found.");
+            }
             await _orderItemRepo.DeleteAsync(orderItem);
         }
 
-        public async Task<OrderItem> UpdateAsync(int orderItemId, UpdateOrderItemDTO dto)
+        public async Task<OrderItemDTO> UpdateAsync(int orderItemId, UpdateOrderItemDTO dto)
         {
-            var result = await _updateValidator.ValidateAsync(dto);
-            ValidateResult(result);
+            await _updateValidator.ValidateAndThrowAsync(dto);
 
-            var orderItem = await _orderItemRepo.GetByIdAsync(orderItemId) ?? throw new KeyNotFoundException($"Order item with ID {orderItemId} not found.");
+            var orderItem = await _orderItemRepo.GetByIdAsync(orderItemId);
+            if (orderItem == null)
+            {
+                throw new NotFoundException($"Order item with ID {orderItemId} not found.");
+            }
 
-            orderItem.OrderId = dto.OrderId;
-            orderItem.ItemId = dto.ItemId;
+            var order = await _orderRepo.GetByIdAsync(dto.OrderId);
+            if (order == null)
+            {
+                throw new NotFoundException($"Order with ID {dto.OrderId} not found.");
+            }
+
+            var menuItem = await _menuItemRepo.GetByIdAsync(dto.ItemId);
+            if (menuItem == null)
+            {
+                throw new NotFoundException($"Menu item with ID {dto.ItemId} not found.");
+            }
+
+            orderItem.Order = order;
+            orderItem.MenuItem = menuItem;
             orderItem.Quantity = dto.Quantity;
 
-            return await _orderItemRepo.UpdateAsync(orderItem);
+            var updatedOrderItem = await _orderItemRepo.UpdateAsync(orderItem);
+            return ToDTO(updatedOrderItem);
         }
 
-        private static void ValidateResult(ValidationResult result)
+        private static OrderItemDTO ToDTO(OrderItem orderItem)
         {
-            if (!result.IsValid)
-            {
-                var errors = result.Errors.Select(e => new
-                {
-                    field = e.PropertyName,
-                    message = e.ErrorMessage
-                }).ToList();
-
-                var json = JsonSerializer.Serialize(new { errors });
-                throw new ArgumentException(json);
-            }
+            return new OrderItemDTO(
+                orderItem.OrderItemId,
+                orderItem.OrderId,
+                orderItem.ItemId,
+                orderItem.Quantity,
+                orderItem.MenuItem?.Name ?? ""
+            );
         }
     }
 }

@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using RestaurantReservation.Core.Services.Interfaces;
-using RestaurantReservation.Db.Models;
 using RestaurantReservation.Shared.DTOs.MenuItem;
-using System.Text.Json;
 
 namespace RestaurantReservation.API.Endpoints
 {
@@ -12,9 +10,7 @@ namespace RestaurantReservation.API.Endpoints
         {
             app.MapGet("/api/menuitems", async ([FromServices] IMenuItemService menuItemService) =>
             {
-                var menuItems = await menuItemService.ViewAllAsync();
-                var menuItemDTOs = menuItems.Select(ToDTO).ToList();
-                return Results.Ok(menuItemDTOs);
+                return Results.Ok(await menuItemService.ViewAllAsync());
             })
             .WithName("GetAllMenuItems")
             .WithSummary("Retrieves all menu items")
@@ -32,12 +28,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapGet("/api/menuitems/{id:int}", async (int id, [FromServices] IMenuItemService menuItemService) =>
             {
-                var menuItem = await menuItemService.GetMenuItemByIdAsync(id);
-                if (menuItem == null)
-                {
-                    return Results.NotFound(new { error = $"Menu item with ID {id} not found." });
-                }
-                return Results.Ok(ToDTO(menuItem));
+                return Results.Ok(await menuItemService.GetMenuItemByIdAsync(id));
             })
             .WithName("GetMenuItemById")
             .WithSummary("Retrieves a menu item by its ID")
@@ -60,20 +51,8 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPost("/api/menuitems", async ([FromBody] CreateMenuItemDTO dto, [FromServices] IMenuItemService menuItemService) =>
             {
-                try
-                {
-                    var menuItem = await menuItemService.AddAsync(dto);
-                    return Results.Created($"/api/menuitems/{menuItem.ItemId}", ToDTO(menuItem));
-                }
-                catch (ArgumentException ex)
-                {
-                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
-                    return Results.BadRequest(errorResponse);
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                var menuItem = await menuItemService.AddAsync(dto);
+                return Results.Created($"/api/menuitems/{menuItem.ItemId}", menuItem);
             })
             .WithName("AddMenuItem")
             .WithSummary("Creates a new menu item")
@@ -98,20 +77,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPut("/api/menuitems/{id:int}", async (int id, [FromBody] UpdateMenuItemDTO dto, [FromServices] IMenuItemService menuItemService) =>
             {
-                try
-                {
-                    var menuItem = await menuItemService.UpdateAsync(id, dto);
-                    return Results.Ok(ToDTO(menuItem));
-                }
-                catch (ArgumentException ex)
-                {
-                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
-                    return Results.BadRequest(errorResponse);
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                return Results.Ok(await menuItemService.UpdateAsync(id, dto));
             })
             .WithName("UpdateMenuItem")
             .WithSummary("Updates an existing menu item")
@@ -139,15 +105,8 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapDelete("/api/menuitems/{id:int}", async (int id, [FromServices] IMenuItemService menuItemService) =>
             {
-                try
-                {
-                    await menuItemService.DeleteAsync(id);
-                    return Results.NoContent();
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                await menuItemService.DeleteAsync(id);
+                return Results.NoContent();
             })
             .WithName("DeleteMenuItem")
             .WithSummary("Deletes a menu item by its ID")
@@ -167,18 +126,6 @@ namespace RestaurantReservation.API.Endpoints
             .Produces(404)
             .Produces(401)
             .RequireAuthorization();
-        }
-
-        private static MenuItemDTO ToDTO(MenuItem menuItem)
-        {
-            return new MenuItemDTO(
-                menuItem.ItemId,
-                menuItem.Name,
-                menuItem.Description,
-                menuItem.Price,
-                menuItem.RestaurantId,
-                menuItem.Restaurant?.Name ?? ""
-            );
         }
     }
 }

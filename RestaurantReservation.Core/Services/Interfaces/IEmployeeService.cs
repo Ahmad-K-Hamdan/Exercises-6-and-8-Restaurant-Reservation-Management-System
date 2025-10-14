@@ -1,4 +1,3 @@
-using RestaurantReservation.Db.Models;
 using RestaurantReservation.Shared.DTOs.Employee;
 
 namespace RestaurantReservation.Core.Services.Interfaces
