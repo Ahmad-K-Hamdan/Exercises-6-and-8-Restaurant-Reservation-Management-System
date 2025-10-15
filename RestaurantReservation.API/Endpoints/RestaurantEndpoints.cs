@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using RestaurantReservation.Db.Models;
 using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Shared.DTOs.Restaurant;
-using System.Text.Json;
 
 namespace RestaurantReservation.API.Endpoints
 {
@@ -12,9 +10,7 @@ namespace RestaurantReservation.API.Endpoints
         {
             app.MapGet("/api/restaurants", async ([FromServices] IRestaurantService restaurantService) =>
             {
-                var restaurants = await restaurantService.ViewAllAsync();
-                var restaurantDTOs = restaurants.Select(ToDTO).ToList();
-                return Results.Ok(restaurantDTOs);
+                return Results.Ok(await restaurantService.ViewAllAsync());
             })
             .WithName("GetAllRestaurants")
             .WithSummary("Retrieves all restaurants")
@@ -32,12 +28,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapGet("/api/restaurants/{id:int}", async (int id, [FromServices] IRestaurantService restaurantService) =>
             {
-                var restaurant = await restaurantService.GetRestaurantByIdAsync(id);
-                if (restaurant == null)
-                {
-                    return Results.NotFound(new { error = $"Restaurant with ID {id} not found." });
-                }
-                return Results.Ok(ToDTO(restaurant));
+                return Results.Ok(await restaurantService.GetRestaurantByIdAsync(id));
             })
             .WithName("GetRestaurantById")
             .WithSummary("Retrieves a restaurant by its ID")
@@ -60,16 +51,8 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPost("/api/restaurants", async ([FromBody] CreateRestaurantDTO dto, [FromServices] IRestaurantService restaurantService) =>
             {
-                try
-                {
-                    var restaurant = await restaurantService.AddAsync(dto);
-                    return Results.Created($"/api/restaurants/{restaurant.RestaurantId}", ToDTO(restaurant));
-                }
-                catch (ArgumentException ex)
-                {
-                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
-                    return Results.BadRequest(errorResponse);
-                }
+                var restaurant = await restaurantService.AddAsync(dto);
+                return Results.Created($"/api/restaurants/{restaurant.RestaurantId}", restaurant);
             })
             .WithName("AddRestaurant")
             .WithSummary("Creates a new restaurant")
@@ -92,20 +75,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPut("/api/restaurants/{id:int}", async (int id, [FromBody] UpdateRestaurantDTO dto, [FromServices] IRestaurantService restaurantService) =>
             {
-                try
-                {
-                    var restaurant = await restaurantService.UpdateAsync(id, dto);
-                    return Results.Ok(ToDTO(restaurant));
-                }
-                catch (ArgumentException ex)
-                {
-                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
-                    return Results.BadRequest(errorResponse);
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                return Results.Ok(await restaurantService.UpdateAsync(id, dto));
             })
             .WithName("UpdateRestaurant")
             .WithSummary("Updates an existing restaurant")
@@ -133,15 +103,8 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapDelete("/api/restaurants/{id:int}", async (int id, [FromServices] IRestaurantService restaurantService) =>
             {
-                try
-                {
-                    await restaurantService.DeleteAsync(id);
-                    return Results.NoContent();
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                await restaurantService.DeleteAsync(id);
+                return Results.NoContent();
             })
             .WithName("DeleteRestaurant")
             .WithSummary("Deletes a restaurant by its ID")
@@ -161,17 +124,6 @@ namespace RestaurantReservation.API.Endpoints
             .Produces(404)
             .Produces(401)
             .RequireAuthorization();
-        }
-
-        private static RestaurantDTO ToDTO(Restaurant restaurant)
-        {
-            return new RestaurantDTO(
-                restaurant.RestaurantId,
-                restaurant.Name,
-                restaurant.Address,
-                restaurant.PhoneNumber,
-                restaurant.OpeningHours
-            );
         }
     }
 }

@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using RestaurantReservation.Core.Services.Interfaces;
-using RestaurantReservation.Db.Models;
 using RestaurantReservation.Shared.DTOs.MenuItem;
 using RestaurantReservation.Shared.DTOs.Order;
 using RestaurantReservation.Shared.DTOs.Reservation;
-using System.Text.Json;
 
 namespace RestaurantReservation.API.Endpoints
 {
@@ -14,9 +12,7 @@ namespace RestaurantReservation.API.Endpoints
         {
             app.MapGet("/api/reservations", async ([FromServices] IReservationService reservationService) =>
             {
-                var reservations = await reservationService.ViewAllAsync();
-                var reservationDTOs = reservations.Select(ToDTO).ToList();
-                return Results.Ok(reservationDTOs);
+                return Results.Ok(await reservationService.ViewAllAsync());
             })
             .WithName("GetAllReservations")
             .WithSummary("Retrieves all reservations")
@@ -34,12 +30,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapGet("/api/reservations/{id:int}", async (int id, [FromServices] IReservationService reservationService) =>
             {
-                var reservation = await reservationService.GetReservationByIdAsync(id);
-                if (reservation == null)
-                {
-                    return Results.NotFound(new { error = $"Reservation with ID {id} not found." });
-                }
-                return Results.Ok(ToDTO(reservation));
+                return Results.Ok(await reservationService.GetReservationByIdAsync(id));
             })
             .WithName("GetReservationById")
             .WithSummary("Retrieves a reservation by its ID")
@@ -62,20 +53,8 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPost("/api/reservations", async ([FromBody] CreateReservationDTO dto, [FromServices] IReservationService reservationService) =>
             {
-                try
-                {
-                    var reservation = await reservationService.AddAsync(dto);
-                    return Results.Created($"/api/reservations/{reservation.ReservationId}", ToDTO(reservation));
-                }
-                catch (ArgumentException ex)
-                {
-                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
-                    return Results.BadRequest(errorResponse);
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                var reservation = await reservationService.AddAsync(dto);
+                return Results.Created($"/api/reservations/{reservation.ReservationId}", reservation);
             })
             .WithName("AddReservation")
             .WithSummary("Creates a new reservation")
@@ -100,20 +79,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPut("/api/reservations/{id:int}", async (int id, [FromBody] UpdateReservationDTO dto, [FromServices] IReservationService reservationService) =>
             {
-                try
-                {
-                    var reservation = await reservationService.UpdateAsync(id, dto);
-                    return Results.Ok(ToDTO(reservation));
-                }
-                catch (ArgumentException ex)
-                {
-                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
-                    return Results.BadRequest(errorResponse);
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                return Results.Ok(await reservationService.UpdateAsync(id, dto));
             })
             .WithName("UpdateReservation")
             .WithSummary("Updates an existing reservation")
@@ -141,15 +107,8 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapDelete("/api/reservations/{id:int}", async (int id, [FromServices] IReservationService reservationService) =>
             {
-                try
-                {
-                    await reservationService.DeleteAsync(id);
-                    return Results.NoContent();
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                await reservationService.DeleteAsync(id);
+                return Results.NoContent();
             })
             .WithName("DeleteReservation")
             .WithSummary("Deletes a reservation by its ID")
@@ -172,14 +131,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapGet("/api/reservations/customer/{customerId}", async (int customerId, [FromServices] IReservationService reservationService, [FromServices] ICustomerService customerService) =>
             {
-                var customer = await customerService.GetCustomerByIdAsync(customerId);
-                if (customer == null)
-                {
-                    return Results.NotFound(new { error = $"Customer with ID {customerId} not found." });
-                }
-                var reservations = await reservationService.ListReservationsByCustomerAsync(customerId);
-                var reservationDTOs = reservations.Select(ToDTO).ToList();
-                return Results.Ok(reservationDTOs);
+                return Results.Ok(await reservationService.ListReservationsByCustomerAsync(customerId));
             })
             .WithName("GetReservationsByCustomerId")
             .WithSummary("Retrieves all reservations for a specific customer by customer ID")
@@ -191,7 +143,7 @@ namespace RestaurantReservation.API.Endpoints
 
                 ### Responses
                 - **200 OK**: Returns a list of reservations for the customer.
-                - **404 Not Found**: If the customer does not exist or has no reservations.
+                - **404 Not Found**: If the customer does not exist.
                 - **401 Unauthorized**: If the user is not authenticated.
                 """)
             .WithTags("Reservation")
@@ -202,13 +154,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapGet("/api/reservations/{reservationId}/orders", async (int reservationId, [FromServices] IReservationService reservationService) =>
             {
-                var reservation = await reservationService.GetReservationByIdAsync(reservationId);
-                if (reservation == null)
-                {
-                    return Results.NotFound(new { error = $"Reservation with ID {reservationId} not found." });
-                }
-                var orders = await reservationService.ListOrdersAndMenuItemsAsync(reservationId);
-                return Results.Ok(orders);
+                return Results.Ok(await reservationService.ListOrdersAndMenuItemsAsync(reservationId));
             })
             .WithName("GetOrdersByReservationId")
             .WithSummary("Retrieves all orders and their menu items for a specific reservation by reservation ID")
@@ -231,13 +177,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapGet("/api/reservations/{reservationId}/menu-items", async (int reservationId, [FromServices] IReservationService reservationService) =>
             {
-                var reservation = await reservationService.GetReservationByIdAsync(reservationId);
-                if (reservation == null)
-                {
-                    return Results.NotFound(new { error = $"Reservation with ID {reservationId} not found." });
-                }
-                var menuItems = await reservationService.ListOrderedMenuItemsAsync(reservationId);
-                return Results.Ok(menuItems);
+                return Results.Ok(await reservationService.ListOrderedMenuItemsAsync(reservationId));
             })
             .WithName("GetMenuItemsByReservationId")
             .WithSummary("Retrieves all ordered menu items for a specific reservation by reservation ID")
@@ -257,20 +197,6 @@ namespace RestaurantReservation.API.Endpoints
             .Produces(404)
             .Produces(401)
             .RequireAuthorization();
-        }
-
-        private static ReservationDTO ToDTO(Reservation reservation)
-        {
-            return new ReservationDTO(
-                reservation.ReservationId,
-                reservation.ReservationDate,
-                reservation.PartySize,
-                reservation.CustomerId,
-                reservation.Customer != null ? $"{reservation.Customer.FirstName} {reservation.Customer.LastName}" : "",
-                reservation.RestaurantId,
-                reservation.Restaurant?.Name ?? "",
-                reservation.TableId
-            );
         }
     }
 }

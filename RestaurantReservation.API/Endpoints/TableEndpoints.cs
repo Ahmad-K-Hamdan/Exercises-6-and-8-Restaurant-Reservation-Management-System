@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using RestaurantReservation.Db.Models;
 using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Shared.DTOs.Table;
-using System.Text.Json;
 
 namespace RestaurantReservation.API.Endpoints
 {
@@ -12,9 +10,7 @@ namespace RestaurantReservation.API.Endpoints
         {
             app.MapGet("/api/tables", async ([FromServices] ITableService tableService) =>
             {
-                var tables = await tableService.ViewAllAsync();
-                var tableDTOs = tables.Select(ToDTO).ToList();
-                return Results.Ok(tableDTOs);
+                return Results.Ok(await tableService.ViewAllAsync());
             })
             .WithName("GetAllTables")
             .WithSummary("Retrieves all tables")
@@ -32,12 +28,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapGet("/api/tables/{id:int}", async (int id, [FromServices] ITableService tableService) =>
             {
-                var table = await tableService.GetTableByIdAsync(id);
-                if (table == null)
-                {
-                    return Results.NotFound(new { error = $"Table with ID {id} not found." });
-                }
-                return Results.Ok(ToDTO(table));
+                return Results.Ok(await tableService.GetTableByIdAsync(id));
             })
             .WithName("GetTableById")
             .WithSummary("Retrieves a table by its ID")
@@ -60,20 +51,9 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPost("/api/tables", async ([FromBody] CreateTableDTO dto, [FromServices] ITableService tableService) =>
             {
-                try
-                {
-                    var table = await tableService.AddAsync(dto);
-                    return Results.Created($"/api/tables/{table.TableId}", ToDTO(table));
-                }
-                catch (ArgumentException ex)
-                {
-                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
-                    return Results.BadRequest(errorResponse);
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                var table = await tableService.AddAsync(dto);
+                return Results.Created($"/api/tables/{table.TableId}", table);
+
             })
             .WithName("AddTable")
             .WithSummary("Creates a new table")
@@ -98,20 +78,7 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapPut("/api/tables/{id:int}", async (int id, [FromBody] UpdateTableDTO dto, [FromServices] ITableService tableService) =>
             {
-                try
-                {
-                    var table = await tableService.UpdateAsync(id, dto);
-                    return Results.Ok(ToDTO(table));
-                }
-                catch (ArgumentException ex)
-                {
-                    var errorResponse = JsonSerializer.Deserialize<object>(ex.Message);
-                    return Results.BadRequest(errorResponse);
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                return Results.Ok(await tableService.UpdateAsync(id, dto));
             })
             .WithName("UpdateTable")
             .WithSummary("Updates an existing table")
@@ -139,15 +106,8 @@ namespace RestaurantReservation.API.Endpoints
 
             app.MapDelete("/api/tables/{id:int}", async (int id, [FromServices] ITableService tableService) =>
             {
-                try
-                {
-                    await tableService.DeleteAsync(id);
-                    return Results.NoContent();
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    return Results.NotFound(new { error = ex.Message });
-                }
+                await tableService.DeleteAsync(id);
+                return Results.NoContent();
             })
             .WithName("DeleteTable")
             .WithSummary("Deletes a table by its ID")
@@ -167,16 +127,6 @@ namespace RestaurantReservation.API.Endpoints
             .Produces(404)
             .Produces(401)
             .RequireAuthorization();
-        }
-
-        private static TableDTO ToDTO(Table table)
-        {
-            return new TableDTO(
-                table.TableId,
-                table.Capacity,
-                table.RestaurantId,
-                table.Restaurant?.Name ?? ""
-            );
         }
     }
 }

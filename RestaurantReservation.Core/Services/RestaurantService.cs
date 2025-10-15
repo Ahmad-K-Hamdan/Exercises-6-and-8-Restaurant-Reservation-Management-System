@@ -1,10 +1,9 @@
-﻿using RestaurantReservation.Db.Models;
+﻿using FluentValidation;
+using RestaurantReservation.Core.Exceptions;
 using RestaurantReservation.Core.Services.Interfaces;
+using RestaurantReservation.Db.Models;
 using RestaurantReservation.Db.Repositories.Interfaces;
 using RestaurantReservation.Shared.DTOs.Restaurant;
-using FluentValidation;
-using FluentValidation.Results;
-using System.Text.Json;
 
 namespace RestaurantReservation.Core.Services
 {
@@ -23,20 +22,25 @@ namespace RestaurantReservation.Core.Services
             _updateValidator = updateValidator;
         }
 
-        public async Task<List<Restaurant>> ViewAllAsync()
+        public async Task<List<RestaurantDTO>> ViewAllAsync()
         {
-            return await _restaurantRepo.GetAllAsync();
+            var restaurants = await _restaurantRepo.GetAllAsync();
+            return restaurants.Select(ToDTO).ToList();
         }
 
-        public async Task<Restaurant?> GetRestaurantByIdAsync(int restaurantId)
+        public async Task<RestaurantDTO> GetRestaurantByIdAsync(int restaurantId)
         {
-            return await _restaurantRepo.GetByIdAsync(restaurantId);
+            var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId);
+            if (restaurant == null)
+            {
+                throw new NotFoundException($"Restaurant with ID {restaurantId} not found.");
+            }
+            return ToDTO(restaurant);
         }
 
-        public async Task<Restaurant> AddAsync(CreateRestaurantDTO dto)
+        public async Task<RestaurantDTO> AddAsync(CreateRestaurantDTO dto)
         {
-            var result = await _createValidator.ValidateAsync(dto);
-            ValidateResult(result);
+            await _createValidator.ValidateAndThrowAsync(dto);
 
             var newRestaurant = new Restaurant
             {
@@ -46,49 +50,58 @@ namespace RestaurantReservation.Core.Services
                 OpeningHours = TimeSpan.Parse(dto.OpeningHours)
             };
 
-            return await _restaurantRepo.AddAsync(newRestaurant);
+            var restaurant = await _restaurantRepo.AddAsync(newRestaurant);
+            return ToDTO(restaurant);
         }
 
         public async Task DeleteAsync(int restaurantId)
         {
-            var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId) ?? throw new KeyNotFoundException($"Restaurant with ID {restaurantId} not found.");
+            var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId);
+            if (restaurant == null)
+            {
+                throw new NotFoundException($"Restaurant with ID {restaurantId} not found.");
+            }
             await _restaurantRepo.DeleteAsync(restaurant);
         }
 
-        public async Task<Restaurant> UpdateAsync(int restaurantId, UpdateRestaurantDTO dto)
+        public async Task<RestaurantDTO> UpdateAsync(int restaurantId, UpdateRestaurantDTO dto)
         {
-            var result = await _updateValidator.ValidateAsync(dto);
-            ValidateResult(result);
+            await _updateValidator.ValidateAndThrowAsync(dto);
 
-            var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId) ?? throw new KeyNotFoundException($"Restaurant with ID {restaurantId} not found.");
+            var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId);
+            if (restaurant == null)
+            {
+                throw new NotFoundException($"Restaurant with ID {restaurantId} not found.");
+            }
 
             restaurant.Name = dto.Name;
             restaurant.Address = dto.Address;
             restaurant.PhoneNumber = dto.PhoneNumber;
             restaurant.OpeningHours = TimeSpan.Parse(dto.OpeningHours);
 
-            return await _restaurantRepo.UpdateAsync(restaurant);
+            var updatedRestaurant = await _restaurantRepo.UpdateAsync(restaurant);
+            return ToDTO(updatedRestaurant);
         }
 
         public async Task<decimal> CalculateRestaurantRevenueAsync(int restaurantId)
         {
-            var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId) ?? throw new KeyNotFoundException($"Restaurant with ID {restaurantId} not found.");
+            var restaurant = await _restaurantRepo.GetByIdAsync(restaurantId);
+            if (restaurant == null)
+            {
+                throw new NotFoundException($"Restaurant with ID {restaurantId} not found.");
+            }
             return await _restaurantRepo.GetRestaurantRevenueAsync(restaurantId);
         }
 
-        private static void ValidateResult(ValidationResult result)
+        private static RestaurantDTO ToDTO(Restaurant restaurant)
         {
-            if (!result.IsValid)
-            {
-                var errors = result.Errors.Select(e => new
-                {
-                    field = e.PropertyName,
-                    message = e.ErrorMessage
-                }).ToList();
-
-                var json = JsonSerializer.Serialize(new { errors });
-                throw new ArgumentException(json);
-            }
+            return new RestaurantDTO(
+                restaurant.RestaurantId,
+                restaurant.Name,
+                restaurant.Address,
+                restaurant.PhoneNumber,
+                restaurant.OpeningHours
+            );
         }
     }
 }
