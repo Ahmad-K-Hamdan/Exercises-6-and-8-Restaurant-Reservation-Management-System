@@ -1,9 +1,10 @@
-﻿using RestaurantReservation.Db.Models;
-using RestaurantReservation.Core.Services.Interfaces;
-using RestaurantReservation.Db.Repositories.Interfaces;
-using RestaurantReservation.Shared.DTOs.Order;
+﻿using AutoMapper;
 using FluentValidation;
 using RestaurantReservation.Core.Exceptions;
+using RestaurantReservation.Core.Services.Interfaces;
+using RestaurantReservation.Db.Models;
+using RestaurantReservation.Db.Repositories.Interfaces;
+using RestaurantReservation.Shared.DTOs.Order;
 
 namespace RestaurantReservation.Core.Services
 {
@@ -14,24 +15,28 @@ namespace RestaurantReservation.Core.Services
         private readonly IEmployeeRepository _employeeRepo;
         private readonly IValidator<CreateOrderDTO> _createValidator;
         private readonly IValidator<UpdateOrderDTO> _updateValidator;
+        private readonly IMapper _mapper;
 
-        public OrderService(IOrderRepository orderRepo,
+        public OrderService(
+            IOrderRepository orderRepo,
             IReservationRepository reservationRepo,
             IEmployeeRepository employeeRepo,
             IValidator<CreateOrderDTO> createValidator,
-            IValidator<UpdateOrderDTO> updateValidator)
+            IValidator<UpdateOrderDTO> updateValidator,
+            IMapper mapper)
         {
             _orderRepo = orderRepo;
             _reservationRepo = reservationRepo;
             _employeeRepo = employeeRepo;
             _createValidator = createValidator;
             _updateValidator = updateValidator;
+            _mapper = mapper;
         }
 
         public async Task<List<OrderDTO>> ViewAllAsync()
         {
             var orders = await _orderRepo.GetAllAsync();
-            return orders.Select(ToDTO).ToList();
+            return _mapper.Map<List<OrderDTO>>(orders);
         }
 
         public async Task<OrderDTO> GetOrderByIdAsync(int orderId)
@@ -41,7 +46,7 @@ namespace RestaurantReservation.Core.Services
             {
                 throw new NotFoundException($"Order with ID {orderId} not found.");
             }
-            return ToDTO(order);
+            return _mapper.Map<OrderDTO>(order);
         }
 
         public async Task<OrderDTO> AddAsync(CreateOrderDTO dto)
@@ -51,25 +56,19 @@ namespace RestaurantReservation.Core.Services
             var reservation = await _reservationRepo.GetByIdAsync(dto.ReservationId);
             if (reservation == null)
             {
-                throw new KeyNotFoundException($"Reservation with ID {dto.ReservationId} not found.");
+                throw new NotFoundException($"Reservation with ID {dto.ReservationId} not found.");
             }
 
             var employee = await _employeeRepo.GetByIdAsync(dto.EmployeeId);
             if (employee == null)
             {
-                throw new KeyNotFoundException($"Employee with ID {dto.EmployeeId} not found.");
+                throw new NotFoundException($"Employee with ID {dto.EmployeeId} not found.");
             }
 
-            var newOrder = new Order
-            {
-                ReservationId = dto.ReservationId,
-                EmployeeId = dto.EmployeeId,
-                OrderDate = dto.OrderDate,
-                TotalAmount = dto.TotalAmount
-            };
-
+            var newOrder = _mapper.Map<Order>(dto);
             var order = await _orderRepo.AddAsync(newOrder);
-            return ToDTO(order);
+
+            return _mapper.Map<OrderDTO>(order);
         }
 
         public async Task DeleteAsync(int orderId)
@@ -77,7 +76,7 @@ namespace RestaurantReservation.Core.Services
             var order = await _orderRepo.GetByIdAsync(orderId);
             if (order == null)
             {
-                throw new KeyNotFoundException($"Order with ID {orderId} not found.");
+                throw new NotFoundException($"Order with ID {orderId} not found.");
             }
             await _orderRepo.DeleteAsync(order);
         }
@@ -89,45 +88,30 @@ namespace RestaurantReservation.Core.Services
             var order = await _orderRepo.GetByIdAsync(orderId);
             if (order == null)
             {
-                throw new KeyNotFoundException($"Order with ID {orderId} not found.");
+                throw new NotFoundException($"Order with ID {orderId} not found.");
             }
 
             var reservation = await _reservationRepo.GetByIdAsync(dto.ReservationId);
             if (reservation == null)
             {
-                throw new KeyNotFoundException($"Reservation with ID {dto.ReservationId} not found.");
+                throw new NotFoundException($"Reservation with ID {dto.ReservationId} not found.");
             }
 
             var employee = await _employeeRepo.GetByIdAsync(dto.EmployeeId);
             if (employee == null)
             {
-                throw new KeyNotFoundException($"Employee with ID {dto.EmployeeId} not found.");
+                throw new NotFoundException($"Employee with ID {dto.EmployeeId} not found.");
             }
 
-            order.Reservation = reservation;
-            order.Employee = employee;
-            order.OrderDate = dto.OrderDate;
-            order.TotalAmount = dto.TotalAmount;
+            _mapper.Map(dto, order);
 
             var updatedOrder = await _orderRepo.UpdateAsync(order);
-            return ToDTO(updatedOrder);
+            return _mapper.Map<OrderDTO>(updatedOrder);
         }
 
         public async Task<decimal> CalculateAverageOrderAmountByEmployeeAsync(int employeeId)
         {
             return await _orderRepo.CalculateAverageOrderAmountByEmployeeAsync(employeeId);
-        }
-
-        private static OrderDTO ToDTO(Order order)
-        {
-            return new OrderDTO(
-                order.OrderId,
-                order.OrderDate,
-                order.TotalAmount,
-                order.ReservationId,
-                order.EmployeeId,
-                order.Employee != null ? $"{order.Employee.FirstName} {order.Employee.LastName}" : ""
-            );
         }
     }
 }

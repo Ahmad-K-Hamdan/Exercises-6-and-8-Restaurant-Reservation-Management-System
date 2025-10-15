@@ -1,9 +1,10 @@
-﻿using RestaurantReservation.Db.Models;
-using RestaurantReservation.Db.Repositories.Interfaces;
-using RestaurantReservation.Core.Services.Interfaces;
-using RestaurantReservation.Shared.DTOs.Employee;
+﻿using AutoMapper;
 using FluentValidation;
 using RestaurantReservation.Core.Exceptions;
+using RestaurantReservation.Core.Services.Interfaces;
+using RestaurantReservation.Db.Models;
+using RestaurantReservation.Db.Repositories.Interfaces;
+using RestaurantReservation.Shared.DTOs.Employee;
 
 namespace RestaurantReservation.Core.Services
 {
@@ -13,22 +14,26 @@ namespace RestaurantReservation.Core.Services
         private readonly IRestaurantRepository _restaurantRepo;
         private readonly IValidator<CreateEmployeeDTO> _createValidator;
         private readonly IValidator<UpdateEmployeeDTO> _updateValidator;
+        private readonly IMapper _mapper;
 
-        public EmployeeService(IEmployeeRepository employeeRepo,
+        public EmployeeService(
+            IEmployeeRepository employeeRepo,
             IRestaurantRepository restaurantRepo,
             IValidator<CreateEmployeeDTO> createValidator,
-            IValidator<UpdateEmployeeDTO> updateValidator)
+            IValidator<UpdateEmployeeDTO> updateValidator,
+            IMapper mapper)
         {
             _employeeRepo = employeeRepo;
             _restaurantRepo = restaurantRepo;
             _createValidator = createValidator;
             _updateValidator = updateValidator;
+            _mapper = mapper;
         }
 
         public async Task<List<EmployeeDTO>> ViewAllAsync()
         {
             var employees = await _employeeRepo.GetAllAsync();
-            return employees.Select(ToDTO).ToList();
+            return _mapper.Map<List<EmployeeDTO>>(employees);
         }
 
         public async Task<EmployeeDTO> GetEmployeeByIdAsync(int employeeId)
@@ -38,7 +43,7 @@ namespace RestaurantReservation.Core.Services
             {
                 throw new NotFoundException($"Employee with ID {employeeId} not found.");
             }
-            return ToDTO(employee);
+            return _mapper.Map<EmployeeDTO>(employee);
         }
 
         public async Task<EmployeeDTO> AddAsync(CreateEmployeeDTO dto)
@@ -51,16 +56,10 @@ namespace RestaurantReservation.Core.Services
                 throw new NotFoundException($"Restaurant with ID {dto.RestaurantId} not found.");
             }
 
-            var newEmployee = new Employee
-            {
-                RestaurantId = dto.RestaurantId,
-                FirstName = dto.FirstName,
-                LastName = dto.LastName,
-                Position = dto.Position
-            };
+            var newEmployee = _mapper.Map<Employee>(dto);
 
             var employee = await _employeeRepo.AddAsync(newEmployee);
-            return ToDTO(employee);
+            return _mapper.Map<EmployeeDTO>(employee);
         }
 
         public async Task DeleteAsync(int employeeId)
@@ -89,36 +88,21 @@ namespace RestaurantReservation.Core.Services
                 throw new NotFoundException($"Restaurant with ID {dto.RestaurantId} not found.");
             }
 
-            employee.FirstName = dto.FirstName;
-            employee.LastName = dto.LastName;
-            employee.Position = dto.Position;
-            employee.Restaurant = restaurant;
+            _mapper.Map(dto, employee);
 
             var updatedEmployee = await _employeeRepo.UpdateAsync(employee);
-            return ToDTO(updatedEmployee);
+            return _mapper.Map<EmployeeDTO>(updatedEmployee);
         }
 
         public async Task<List<EmployeeDTO>> ListManagersAsync()
         {
             var managers = await _employeeRepo.GetManagersAsync();
-            return managers.Select(ToDTO).ToList();
+            return _mapper.Map<List<EmployeeDTO>>(managers);
         }
 
         public async Task<List<EmployeeDetailsDTO>> GetEmployeeDetailsAsync()
         {
             return await _employeeRepo.GetEmployeeDetailsAsync();
-        }
-
-        private static EmployeeDTO ToDTO(Employee employee)
-        {
-            return new EmployeeDTO(
-                employee.EmployeeId,
-                employee.FirstName,
-                employee.LastName,
-                employee.Position,
-                employee.RestaurantId,
-                employee.Restaurant?.Name ?? ""
-            );
         }
     }
 }

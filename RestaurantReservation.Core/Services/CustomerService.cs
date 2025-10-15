@@ -16,7 +16,8 @@ namespace RestaurantReservation.Core.Services
         private readonly IValidator<PartySizeDTO> _partySizeValidator;
         private readonly IMapper _mapper;
 
-        public CustomerService(ICustomerRepository customerRepo,
+        public CustomerService(
+            ICustomerRepository customerRepo,
             IValidator<CreateCustomerDTO> createValidator,
             IValidator<UpdateCustomerDTO> updateValidator,
             IValidator<PartySizeDTO> partySizeValidator,

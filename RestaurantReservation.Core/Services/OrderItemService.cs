@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using AutoMapper;
+using FluentValidation;
 using RestaurantReservation.Core.Exceptions;
 using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Db.Models;
@@ -14,24 +15,28 @@ namespace RestaurantReservation.Core.Services
         private readonly IMenuItemRepository _menuItemRepo;
         private readonly IValidator<CreateOrderItemDTO> _createValidator;
         private readonly IValidator<UpdateOrderItemDTO> _updateValidator;
+        private readonly IMapper _mapper;
 
-        public OrderItemService(IOrderItemRepository orderItemRepo,
+        public OrderItemService(
+            IOrderItemRepository orderItemRepo,
             IOrderRepository orderRepo,
             IMenuItemRepository menuItemRepo,
             IValidator<CreateOrderItemDTO> createValidator,
-            IValidator<UpdateOrderItemDTO> updateValidator)
+            IValidator<UpdateOrderItemDTO> updateValidator,
+            IMapper mapper)
         {
             _orderItemRepo = orderItemRepo;
             _orderRepo = orderRepo;
             _menuItemRepo = menuItemRepo;
             _createValidator = createValidator;
             _updateValidator = updateValidator;
+            _mapper = mapper;
         }
 
         public async Task<List<OrderItemDTO>> ViewAllAsync()
         {
             var orderItems = await _orderItemRepo.GetAllAsync();
-            return orderItems.Select(ToDTO).ToList();
+            return _mapper.Map<List<OrderItemDTO>>(orderItems);
         }
 
         public async Task<OrderItemDTO> GetOrderItemByIdAsync(int orderItemId)
@@ -41,7 +46,7 @@ namespace RestaurantReservation.Core.Services
             {
                 throw new NotFoundException($"Order item with ID {orderItemId} not found.");
             }
-            return ToDTO(orderItem);
+            return _mapper.Map<OrderItemDTO>(orderItem);
         }
 
         public async Task<OrderItemDTO> AddAsync(CreateOrderItemDTO dto)
@@ -60,15 +65,10 @@ namespace RestaurantReservation.Core.Services
                 throw new NotFoundException($"Menu item with ID {dto.ItemId} not found.");
             }
 
-            var newOrderItem = new OrderItem
-            {
-                OrderId = dto.OrderId,
-                ItemId = dto.ItemId,
-                Quantity = dto.Quantity
-            };
+            var newOrderItem = _mapper.Map<OrderItem>(dto);
 
             var orderItem = await _orderItemRepo.AddAsync(newOrderItem);
-            return ToDTO(orderItem);
+            return _mapper.Map<OrderItemDTO>(orderItem);
         }
 
         public async Task DeleteAsync(int orderItemId)
@@ -103,23 +103,10 @@ namespace RestaurantReservation.Core.Services
                 throw new NotFoundException($"Menu item with ID {dto.ItemId} not found.");
             }
 
-            orderItem.Order = order;
-            orderItem.MenuItem = menuItem;
-            orderItem.Quantity = dto.Quantity;
+            _mapper.Map(dto, orderItem);
 
             var updatedOrderItem = await _orderItemRepo.UpdateAsync(orderItem);
-            return ToDTO(updatedOrderItem);
-        }
-
-        private static OrderItemDTO ToDTO(OrderItem orderItem)
-        {
-            return new OrderItemDTO(
-                orderItem.OrderItemId,
-                orderItem.OrderId,
-                orderItem.ItemId,
-                orderItem.Quantity,
-                orderItem.MenuItem?.Name ?? ""
-            );
+            return _mapper.Map<OrderItemDTO>(updatedOrderItem);
         }
     }
 }

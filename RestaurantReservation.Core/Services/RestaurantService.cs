@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using AutoMapper;
+using FluentValidation;
 using RestaurantReservation.Core.Exceptions;
 using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Db.Models;
@@ -12,20 +13,24 @@ namespace RestaurantReservation.Core.Services
         private readonly IRestaurantRepository _restaurantRepo;
         private readonly IValidator<CreateRestaurantDTO> _createValidator;
         private readonly IValidator<UpdateRestaurantDTO> _updateValidator;
+        private readonly IMapper _mapper;
 
-        public RestaurantService(IRestaurantRepository restaurantRepo,
+        public RestaurantService(
+            IRestaurantRepository restaurantRepo,
             IValidator<CreateRestaurantDTO> createValidator,
-            IValidator<UpdateRestaurantDTO> updateValidator)
+            IValidator<UpdateRestaurantDTO> updateValidator,
+            IMapper mapper)
         {
             _restaurantRepo = restaurantRepo;
             _createValidator = createValidator;
             _updateValidator = updateValidator;
+            _mapper = mapper;
         }
 
         public async Task<List<RestaurantDTO>> ViewAllAsync()
         {
             var restaurants = await _restaurantRepo.GetAllAsync();
-            return restaurants.Select(ToDTO).ToList();
+            return _mapper.Map<List<RestaurantDTO>>(restaurants);
         }
 
         public async Task<RestaurantDTO> GetRestaurantByIdAsync(int restaurantId)
@@ -35,23 +40,17 @@ namespace RestaurantReservation.Core.Services
             {
                 throw new NotFoundException($"Restaurant with ID {restaurantId} not found.");
             }
-            return ToDTO(restaurant);
+            return _mapper.Map<RestaurantDTO>(restaurant);
         }
 
         public async Task<RestaurantDTO> AddAsync(CreateRestaurantDTO dto)
         {
             await _createValidator.ValidateAndThrowAsync(dto);
 
-            var newRestaurant = new Restaurant
-            {
-                Name = dto.Name,
-                Address = dto.Address,
-                PhoneNumber = dto.PhoneNumber,
-                OpeningHours = TimeSpan.Parse(dto.OpeningHours)
-            };
-
+            var newRestaurant = _mapper.Map<Restaurant>(dto);
             var restaurant = await _restaurantRepo.AddAsync(newRestaurant);
-            return ToDTO(restaurant);
+
+            return _mapper.Map<RestaurantDTO>(restaurant);
         }
 
         public async Task DeleteAsync(int restaurantId)
@@ -74,13 +73,10 @@ namespace RestaurantReservation.Core.Services
                 throw new NotFoundException($"Restaurant with ID {restaurantId} not found.");
             }
 
-            restaurant.Name = dto.Name;
-            restaurant.Address = dto.Address;
-            restaurant.PhoneNumber = dto.PhoneNumber;
-            restaurant.OpeningHours = TimeSpan.Parse(dto.OpeningHours);
+            _mapper.Map(dto, restaurant);
 
             var updatedRestaurant = await _restaurantRepo.UpdateAsync(restaurant);
-            return ToDTO(updatedRestaurant);
+            return _mapper.Map<RestaurantDTO>(updatedRestaurant);
         }
 
         public async Task<decimal> CalculateRestaurantRevenueAsync(int restaurantId)
@@ -91,17 +87,6 @@ namespace RestaurantReservation.Core.Services
                 throw new NotFoundException($"Restaurant with ID {restaurantId} not found.");
             }
             return await _restaurantRepo.GetRestaurantRevenueAsync(restaurantId);
-        }
-
-        private static RestaurantDTO ToDTO(Restaurant restaurant)
-        {
-            return new RestaurantDTO(
-                restaurant.RestaurantId,
-                restaurant.Name,
-                restaurant.Address,
-                restaurant.PhoneNumber,
-                restaurant.OpeningHours
-            );
         }
     }
 }

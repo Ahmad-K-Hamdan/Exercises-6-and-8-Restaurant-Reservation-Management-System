@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using AutoMapper;
+using FluentValidation;
 using RestaurantReservation.Core.Exceptions;
 using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Db.Models;
@@ -17,13 +18,16 @@ namespace RestaurantReservation.Core.Services
         private readonly ITableRepository _tableRepo;
         private readonly IValidator<CreateReservationDTO> _createValidator;
         private readonly IValidator<UpdateReservationDTO> _updateValidator;
+        private readonly IMapper _mapper;
 
-        public ReservationService(IReservationRepository reservationRepo,
+        public ReservationService(
+            IReservationRepository reservationRepo,
             ICustomerRepository customerRepo,
             IRestaurantRepository restaurantRepo,
             ITableRepository tableRepo,
             IValidator<CreateReservationDTO> createValidator,
-            IValidator<UpdateReservationDTO> updateValidator)
+            IValidator<UpdateReservationDTO> updateValidator,
+            IMapper mapper)
         {
             _reservationRepo = reservationRepo;
             _customerRepo = customerRepo;
@@ -31,12 +35,13 @@ namespace RestaurantReservation.Core.Services
             _tableRepo = tableRepo;
             _createValidator = createValidator;
             _updateValidator = updateValidator;
+            _mapper = mapper;
         }
 
         public async Task<List<ReservationDTO>> ViewAllAsync()
         {
             var reservations = await _reservationRepo.GetAllAsync();
-            return reservations.Select(ToDTO).ToList();
+            return _mapper.Map<List<ReservationDTO>>(reservations);
         }
 
         public async Task<ReservationDTO> GetReservationByIdAsync(int reservationId)
@@ -46,7 +51,8 @@ namespace RestaurantReservation.Core.Services
             {
                 throw new NotFoundException($"Reservation with ID {reservationId} not found.");
             }
-            return ToDTO(reservation);
+
+            return _mapper.Map<ReservationDTO>(reservation);
         }
 
         public async Task<ReservationDTO> AddAsync(CreateReservationDTO dto)
@@ -71,17 +77,10 @@ namespace RestaurantReservation.Core.Services
                 throw new NotFoundException($"Table with ID {dto.TableId} not found.");
             }
 
-            var newReservation = new Reservation
-            {
-                CustomerId = dto.CustomerId,
-                RestaurantId = dto.RestaurantId,
-                TableId = dto.TableId,
-                ReservationDate = dto.ReservationDate,
-                PartySize = dto.PartySize
-            };
-
+            var newReservation = _mapper.Map<Reservation>(dto);
             var reservation = await _reservationRepo.AddAsync(newReservation);
-            return ToDTO(reservation);
+
+            return _mapper.Map<ReservationDTO>(reservation);
         }
 
         public async Task DeleteAsync(int reservationId)
@@ -122,15 +121,10 @@ namespace RestaurantReservation.Core.Services
                 throw new NotFoundException($"Table with ID {dto.TableId} not found.");
             }
 
-
-            reservation.Customer = customer;
-            reservation.Restaurant = restaurant;
-            reservation.Table = table;
-            reservation.ReservationDate = dto.ReservationDate;
-            reservation.PartySize = dto.PartySize;
+            _mapper.Map(dto, reservation);
 
             var updatedReservation = await _reservationRepo.UpdateAsync(reservation);
-            return ToDTO(updatedReservation);
+            return _mapper.Map<ReservationDTO>(updatedReservation);
         }
 
         public async Task<List<ReservationDTO>> ListReservationsByCustomerAsync(int customerId)
@@ -142,7 +136,7 @@ namespace RestaurantReservation.Core.Services
             }
 
             var reservations = await _reservationRepo.GetByCustomerIdAsync(customerId);
-            return reservations.Select(ToDTO).ToList();
+            return _mapper.Map<List<ReservationDTO>>(reservations);
         }
 
         public async Task<List<OrderWithItemsDTO>> ListOrdersAndMenuItemsAsync(int reservationId)
@@ -163,20 +157,6 @@ namespace RestaurantReservation.Core.Services
                 throw new NotFoundException($"Reservation with ID {reservationId} not found.");
             }
             return await _reservationRepo.ListOrderedMenuItemsAsync(reservationId);
-        }
-
-        private static ReservationDTO ToDTO(Reservation reservation)
-        {
-            return new ReservationDTO(
-                reservation.ReservationId,
-                reservation.ReservationDate,
-                reservation.PartySize,
-                reservation.CustomerId,
-                reservation.Customer != null ? $"{reservation.Customer.FirstName} {reservation.Customer.LastName}" : "",
-                reservation.RestaurantId,
-                reservation.Restaurant?.Name ?? "",
-                reservation.TableId
-            );
         }
     }
 }
