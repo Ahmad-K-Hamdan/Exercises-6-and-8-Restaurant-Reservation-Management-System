@@ -1,5 +1,5 @@
 using FluentValidation;
-using RestaurantReservation.Core.Constants;
+using RestaurantReservation.Shared.Constants;
 using RestaurantReservation.Shared.DTOs.Table;
 
 namespace RestaurantReservation.Core.Validators.TableValidators

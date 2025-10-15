@@ -1,4 +1,4 @@
-﻿namespace RestaurantReservation.Core.Constants
+﻿namespace RestaurantReservation.Shared.Constants
 {
     public static class ValidationMessages
     {

@@ -5,10 +5,10 @@ namespace RestaurantReservation.Core.Services.Interfaces
 {
     public interface ITableService
     {
-        Task<List<Table>> ViewAllAsync();
-        Task<Table?> GetTableByIdAsync(int tableId);
-        Task<Table> AddAsync(CreateTableDTO dto);
+        Task<TableDTO> AddAsync(CreateTableDTO dto);
         Task DeleteAsync(int tableId);
-        Task<Table> UpdateAsync(int tableId, UpdateTableDTO dto);
+        Task<TableDTO> GetTableByIdAsync(int tableId);
+        Task<TableDTO> UpdateAsync(int tableId, UpdateTableDTO dto);
+        Task<List<TableDTO>> ViewAllAsync();
     }
 }

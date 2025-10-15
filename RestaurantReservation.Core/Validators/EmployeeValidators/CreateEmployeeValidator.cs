@@ -1,13 +1,12 @@
 using FluentValidation;
-using RestaurantReservation.Core.Constants;
+using RestaurantReservation.Shared.Constants;
 using RestaurantReservation.Shared.DTOs.Employee;
+using RestaurantReservation.Shared.Enums;
 
 namespace RestaurantReservation.Core.Validators.EmployeeValidators
 {
     public class CreateEmployeeValidator : AbstractValidator<CreateEmployeeDTO>
     {
-        private static readonly string[] ValidPositions = { "Manager", "Server", "Chef", "Host", "Bartender", "Cashier" };
-
         public CreateEmployeeValidator()
         {
             RuleFor(x => x.FirstName)
@@ -24,7 +23,7 @@ namespace RestaurantReservation.Core.Validators.EmployeeValidators
 
             RuleFor(x => x.Position)
                 .NotEmpty().WithMessage(ValidationMessages.PositionRequired)
-                .Must(p => ValidPositions.Contains(p, StringComparer.OrdinalIgnoreCase))
+                .Must(value => Enum.TryParse<EmployeePosition>(value, true, out _))
                 .WithMessage(ValidationMessages.PositionInvalid);
 
             RuleFor(x => x.RestaurantId)

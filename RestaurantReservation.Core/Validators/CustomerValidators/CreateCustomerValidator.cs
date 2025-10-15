@@ -1,7 +1,7 @@
 using FluentValidation;
 using RestaurantReservation.Db.Repositories.Interfaces;
-using RestaurantReservation.Core.Constants;
 using RestaurantReservation.Shared.DTOs.Customer;
+using RestaurantReservation.Shared.Constants;
 
 namespace RestaurantReservation.Core.Validators.CustomerValidators
 {
