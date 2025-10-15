@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using RestaurantReservation.API.Auth;
 using RestaurantReservation.API.Endpoints;
 using RestaurantReservation.Core.Exceptions;
+using RestaurantReservation.Core.Mappings;
 using RestaurantReservation.Core.Services;
 using RestaurantReservation.Core.Services.Interfaces;
 using RestaurantReservation.Core.Validators.CustomerValidators;
@@ -229,6 +230,9 @@ namespace RestaurantReservation.API
             services.AddValidatorsFromAssemblyContaining<UpdateRestaurantValidator>();
             services.AddValidatorsFromAssemblyContaining<CreateTableValidator>();
             services.AddValidatorsFromAssemblyContaining<UpdateTableValidator>();
+
+            // Register AutoMappers
+            services.AddAutoMapper(typeof(CustomerProfile).Assembly);
         }
 
         private static bool InitializeDatabase(IServiceProvider serviceProvider)
