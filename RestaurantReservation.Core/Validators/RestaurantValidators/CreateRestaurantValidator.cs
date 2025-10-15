@@ -21,7 +21,7 @@ namespace RestaurantReservation.Core.Validators.RestaurantValidators
 
             RuleFor(x => x.PhoneNumber)
                 .NotEmpty().WithMessage(ValidationMessages.PhoneNumberRequired)
-                .Matches(@"^\+?[1-9][0-9]{7,14}$").WithMessage(ValidationMessages.PhoneInvalid);
+                .Matches(RegexPatterns.Phone).WithMessage(ValidationMessages.PhoneInvalid);
 
             RuleFor(x => x.OpeningHours)
                 .NotEmpty().WithMessage(ValidationMessages.OpeningHoursRequired)

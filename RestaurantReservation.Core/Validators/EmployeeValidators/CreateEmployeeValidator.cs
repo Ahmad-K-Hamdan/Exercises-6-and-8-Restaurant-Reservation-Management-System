@@ -13,13 +13,13 @@ namespace RestaurantReservation.Core.Validators.EmployeeValidators
                 .NotEmpty().WithMessage(ValidationMessages.FirstNameRequired)
                 .MinimumLength(2).WithMessage(ValidationMessages.NameTooShort)
                 .MaximumLength(50).WithMessage(ValidationMessages.NameTooLong)
-                .Matches(@"^[a-zA-Z]+$").WithMessage(ValidationMessages.NameInvalidCharacters);
+                .Matches(RegexPatterns.PersonName).WithMessage(ValidationMessages.NameInvalidCharacters);
 
             RuleFor(x => x.LastName)
                 .NotEmpty().WithMessage(ValidationMessages.LastNameRequired)
                 .MinimumLength(2).WithMessage(ValidationMessages.NameTooShort)
                 .MaximumLength(50).WithMessage(ValidationMessages.NameTooLong)
-                .Matches(@"^[a-zA-Z]+$").WithMessage(ValidationMessages.NameInvalidCharacters);
+                .Matches(RegexPatterns.PersonName).WithMessage(ValidationMessages.NameInvalidCharacters);
 
             RuleFor(x => x.Position)
                 .NotEmpty().WithMessage(ValidationMessages.PositionRequired)

@@ -1,30 +1,29 @@
 using FluentValidation;
 using RestaurantReservation.Shared.Constants;
 using RestaurantReservation.Shared.DTOs.Employee;
+using RestaurantReservation.Shared.Enums;
 
 namespace RestaurantReservation.Core.Validators.EmployeeValidators
 {
     public class UpdateEmployeeValidator : AbstractValidator<UpdateEmployeeDTO>
     {
-        private static readonly string[] ValidPositions = { "Manager", "Server", "Chef", "Host", "Bartender", "Cashier" };
-
         public UpdateEmployeeValidator()
         {
             RuleFor(x => x.FirstName)
                 .NotEmpty().WithMessage(ValidationMessages.FirstNameRequired)
                 .MinimumLength(2).WithMessage(ValidationMessages.NameTooShort)
                 .MaximumLength(50).WithMessage(ValidationMessages.NameTooLong)
-                .Matches(@"^[a-zA-Z]+$").WithMessage(ValidationMessages.NameInvalidCharacters);
+                .Matches(RegexPatterns.PersonName).WithMessage(ValidationMessages.NameInvalidCharacters);
 
             RuleFor(x => x.LastName)
                 .NotEmpty().WithMessage(ValidationMessages.LastNameRequired)
                 .MinimumLength(2).WithMessage(ValidationMessages.NameTooShort)
                 .MaximumLength(50).WithMessage(ValidationMessages.NameTooLong)
-                .Matches(@"^[a-zA-Z]+$").WithMessage(ValidationMessages.NameInvalidCharacters);
+                .Matches(RegexPatterns.PersonName).WithMessage(ValidationMessages.NameInvalidCharacters);
 
             RuleFor(x => x.Position)
                 .NotEmpty().WithMessage(ValidationMessages.PositionRequired)
-                .Must(p => ValidPositions.Contains(p, StringComparer.OrdinalIgnoreCase))
+                .Must(value => Enum.TryParse<EmployeePosition>(value, true, out _))
                 .WithMessage(ValidationMessages.PositionInvalid);
 
             RuleFor(x => x.RestaurantId)

@@ -17,13 +17,13 @@ namespace RestaurantReservation.Core.Validators.CustomerValidators
                 .NotEmpty().WithMessage(ValidationMessages.FirstNameRequired)
                 .MinimumLength(2).WithMessage(ValidationMessages.NameTooShort)
                 .MaximumLength(50).WithMessage(ValidationMessages.NameTooLong)
-                .Matches(@"^[a-zA-Z]+$").WithMessage(ValidationMessages.NameInvalidCharacters);
+                .Matches(RegexPatterns.PersonName).WithMessage(ValidationMessages.NameInvalidCharacters);
 
             RuleFor(x => x.LastName)
                 .NotEmpty().WithMessage(ValidationMessages.LastNameRequired)
                 .MinimumLength(2).WithMessage(ValidationMessages.NameTooShort)
                 .MaximumLength(50).WithMessage(ValidationMessages.NameTooLong)
-                .Matches(@"^[a-zA-Z]+$").WithMessage(ValidationMessages.NameInvalidCharacters);
+                .Matches(RegexPatterns.PersonName).WithMessage(ValidationMessages.NameInvalidCharacters);
 
             RuleFor(x => x.Email)
                 .NotEmpty().WithMessage(ValidationMessages.EmailRequired)
@@ -33,7 +33,7 @@ namespace RestaurantReservation.Core.Validators.CustomerValidators
 
             RuleFor(x => x.PhoneNumber)
                 .NotEmpty().WithMessage(ValidationMessages.PhoneNumberRequired)
-                .Matches(@"^\+?[1-9][0-9]{7,14}$").WithMessage(ValidationMessages.PhoneInvalid);
+                .Matches(RegexPatterns.Phone).WithMessage(ValidationMessages.PhoneInvalid);
         }
 
         private async Task<bool> BeUniqueEmail(string email, CancellationToken cancellationToken)
