@@ -2,6 +2,8 @@ using FluentValidation;
 using RestaurantReservation.Db.Repositories.Interfaces;
 using RestaurantReservation.Shared.DTOs.MenuItem;
 using RestaurantReservation.Shared.Constants;
+using RestaurantReservation.Core.Constants;
+using RestaurantReservation.Db.Models;
 
 namespace RestaurantReservation.Core.Validators.MenuItemValidators
 {
@@ -45,7 +47,7 @@ namespace RestaurantReservation.Core.Validators.MenuItemValidators
 
             var avgPrice = restaurantItems.Average(m => m.Price);
 
-            return dto.Price >= avgPrice * 0.2m && dto.Price <= avgPrice * 5m;
+            return dto.Price >= avgPrice * MenuItemConstants.MinPriceRatio && dto.Price <= avgPrice * MenuItemConstants.MaxPriceRatio;
         }
     }
 }
