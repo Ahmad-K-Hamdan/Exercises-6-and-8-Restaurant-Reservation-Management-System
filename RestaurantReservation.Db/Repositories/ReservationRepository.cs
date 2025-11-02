@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RestaurantReservation.Db.Models;
-using RestaurantReservation.Core.DTOs;
 using RestaurantReservation.Db.Repositories.Interfaces;
+using RestaurantReservation.Shared.DTOs.MenuItem;
+using RestaurantReservation.Shared.DTOs.Order;
 
 namespace RestaurantReservation.Db.Repositories
 {
@@ -16,7 +17,7 @@ namespace RestaurantReservation.Db.Repositories
 
         public async Task<List<Reservation>> GetAllAsync()
         {
-            return await _context.Reservations.ToListAsync();
+            return await _context.Reservations.Include(res => res.Restaurant).Include(res => res.Customer).ToListAsync();
         }
 
         public async Task<Reservation> AddAsync(Reservation reservation)
@@ -28,7 +29,7 @@ namespace RestaurantReservation.Db.Repositories
 
         public async Task<Reservation?> GetByIdAsync(int ReservationId)
         {
-            return await _context.Reservations.FirstOrDefaultAsync(r => r.ReservationId == ReservationId);
+            return await _context.Reservations.Include(res => res.Restaurant).Include(res => res.Customer).FirstOrDefaultAsync(r => r.ReservationId == ReservationId);
         }
 
         public async Task<Reservation> UpdateAsync(Reservation reservation)
@@ -46,33 +47,42 @@ namespace RestaurantReservation.Db.Repositories
 
         public async Task<List<Reservation>> GetByCustomerIdAsync(int CustomerId)
         {
-            return await _context.Reservations.Where(res => res.CustomerId == CustomerId).ToListAsync();
+            return await _context.Reservations.Include(res => res.Restaurant).Where(res => res.CustomerId == CustomerId).ToListAsync();
         }
 
-        public async Task<List<Order>> ListOrdersAndMenuItemsAsync(int ReservationId)
+        public async Task<List<OrderWithItemsDTO>> ListOrdersAndMenuItemsAsync(int reservationId)
         {
-            return await _context.Orders.Where(o => o.ReservationId == ReservationId)
-                    .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.MenuItem)
-                    .ToListAsync();
+            return await _context.Orders
+                .Where(o => o.ReservationId == reservationId)
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.MenuItem)
+                .Select(o => new OrderWithItemsDTO
+                {
+                    OrderId = o.OrderId,
+                    OrderDate = o.OrderDate,
+                    TotalAmount = o.TotalAmount,
+                    ReservationId = o.ReservationId,
+                    Items = o.OrderItems.Select(oi => new OrderedMenuItemDTO
+                    {
+                        MenuItemName = oi.MenuItem!.Name,
+                        Price = oi.MenuItem.Price,
+                        Quantity = oi.Quantity
+                    }).ToList()
+                })
+                .ToListAsync();
         }
 
         public async Task<List<OrderedMenuItemDTO>> ListOrderedMenuItemsAsync(int reservationId)
         {
-            return await _context.OrderItems.Where(oi => oi.Order.ReservationId == reservationId)
+            return await _context.OrderItems.Where(oi => oi.Order!.ReservationId == reservationId)
                     .Include(oi => oi.MenuItem)
                     .Include(oi => oi.Order)
                     .Select(oi => new OrderedMenuItemDTO
                     {
-                        MenuItemName = oi.MenuItem.Name,
+                        MenuItemName = oi.MenuItem!.Name,
                         Price = oi.MenuItem.Price,
                         Quantity = oi.Quantity,
                     }).ToListAsync();
-        }
-
-        public async Task<List<ReservationDetailsDTO>> GetReservationDetailsAsync()
-        {
-            return await _context.ReservationDetailsView.ToListAsync();
         }
     }
 }

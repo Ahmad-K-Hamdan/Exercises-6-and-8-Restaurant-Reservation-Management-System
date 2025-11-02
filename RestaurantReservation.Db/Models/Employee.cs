@@ -8,7 +8,7 @@
         public required string LastName { get; set; }
         public required string Position { get; set; }
 
-        public required Restaurant Restaurant { get; set; }
+        public Restaurant? Restaurant { get; set; }
         public List<Order> Orders { get; set; } = new List<Order>();
 
         public override string ToString()

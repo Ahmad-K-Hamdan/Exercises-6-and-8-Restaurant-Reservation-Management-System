@@ -1,5 +1,6 @@
-using RestaurantReservation.Core.DTOs;
 using RestaurantReservation.Db.Models;
+using RestaurantReservation.Shared.DTOs.MenuItem;
+using RestaurantReservation.Shared.DTOs.Order;
 
 namespace RestaurantReservation.Db.Repositories.Interfaces
 {
@@ -11,8 +12,7 @@ namespace RestaurantReservation.Db.Repositories.Interfaces
         Task<Reservation> UpdateAsync(Reservation reservation);
         Task DeleteAsync(Reservation reservation);
         Task<List<Reservation>> GetByCustomerIdAsync(int customerId);
-        Task<List<Order>> ListOrdersAndMenuItemsAsync(int reservationId);
+        Task<List<OrderWithItemsDTO>> ListOrdersAndMenuItemsAsync(int reservationId);
         Task<List<OrderedMenuItemDTO>> ListOrderedMenuItemsAsync(int reservationId);
-        Task<List<ReservationDetailsDTO>> GetReservationDetailsAsync();
     }
 }

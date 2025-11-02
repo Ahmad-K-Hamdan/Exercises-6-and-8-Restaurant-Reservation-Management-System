@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿
+using Microsoft.EntityFrameworkCore;
 using RestaurantReservation.Db.Models;
 using RestaurantReservation.Db.Repositories.Interfaces;
 
@@ -15,7 +16,7 @@ namespace RestaurantReservation.Db.Repositories
 
         public async Task<List<Order>> GetAllAsync()
         {
-            return await _context.Orders.ToListAsync();
+            return await _context.Orders.Include(o => o.Employee).ToListAsync();
         }
 
         public async Task<Order> AddAsync(Order order)
@@ -27,7 +28,7 @@ namespace RestaurantReservation.Db.Repositories
 
         public async Task<Order?> GetByIdAsync(int OrderId)
         {
-            return await _context.Orders.FirstOrDefaultAsync(o => o.OrderId == OrderId);
+            return await _context.Orders.Include(o => o.Employee).FirstOrDefaultAsync(o => o.OrderId == OrderId);
         }
 
         public async Task<Order> UpdateAsync(Order order)

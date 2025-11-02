@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using RestaurantReservation.Core.DTOs;
 using RestaurantReservation.Db.Models;
 using RestaurantReservation.Db.Repositories.Interfaces;
+using RestaurantReservation.Shared.DTOs.Employee;
 
 namespace RestaurantReservation.Db.Repositories
 {
@@ -16,7 +16,7 @@ namespace RestaurantReservation.Db.Repositories
 
         public async Task<List<Employee>> GetAllAsync()
         {
-            return await _context.Employees.ToListAsync();
+            return await _context.Employees.Include(e => e.Restaurant).ToListAsync();
         }
 
         public async Task<Employee> AddAsync(Employee employee)
@@ -28,7 +28,7 @@ namespace RestaurantReservation.Db.Repositories
 
         public async Task<Employee?> GetByIdAsync(int EmployeeId)
         {
-            return await _context.Employees.FirstOrDefaultAsync(emp => emp.EmployeeId == EmployeeId);
+            return await _context.Employees.Include(e => e.Restaurant).FirstOrDefaultAsync(emp => emp.EmployeeId == EmployeeId);
         }
 
         public async Task<Employee> UpdateAsync(Employee employee)
@@ -46,7 +46,7 @@ namespace RestaurantReservation.Db.Repositories
 
         public async Task<List<Employee>> GetManagersAsync()
         {
-            return await _context.Employees.Where(emp => emp.Position == "Manager").ToListAsync();
+            return await _context.Employees.Include(e => e.Restaurant).Where(emp => emp.Position == "Manager").ToListAsync();
         }
 
         public async Task<List<EmployeeDetailsDTO>> GetEmployeeDetailsAsync()
