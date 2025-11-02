@@ -220,8 +220,8 @@ namespace RestaurantReservation.API
             services.AddValidatorsFromAssemblyContaining<PartySizeValidator>();
             services.AddValidatorsFromAssemblyContaining<CreateMenuItemValidator>();
             services.AddValidatorsFromAssemblyContaining<UpdateMenuItemValidator>();
-            services.AddValidatorsFromAssemblyContaining<CreateOrderValidator>();
-            services.AddValidatorsFromAssemblyContaining<UpdateOrderValidator>();
+            services.AddValidatorsFromAssemblyContaining<OrderValidator>();
+            services.AddValidatorsFromAssemblyContaining<OrderValidator>();
             services.AddValidatorsFromAssemblyContaining<CreateOrderItemValidator>();
             services.AddValidatorsFromAssemblyContaining<UpdateOrderItemValidator>();
             services.AddValidatorsFromAssemblyContaining<CreateReservationValidator>();

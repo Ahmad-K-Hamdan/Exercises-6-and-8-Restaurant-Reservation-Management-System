@@ -5,11 +5,11 @@ using RestaurantReservation.Shared.Constants;
 
 namespace RestaurantReservation.Core.Validators.OrderValidators
 {
-    public class CreateOrderValidator : AbstractValidator<CreateOrderDTO>
+    public class OrderValidator : AbstractValidator<CreateOrderDTO>
     {
         private readonly IReservationRepository _reservationRepository;
 
-        public CreateOrderValidator(IReservationRepository reservationRepository)
+        public OrderValidator(IReservationRepository reservationRepository)
         {
             _reservationRepository = reservationRepository;
 
